@@ -262,11 +262,11 @@
                         <div class="cart-summary" id="cart-summary">
                             Total: <span id="cart-total">0.00</span>
                         </div>
-                            <div class="input-row">
-                                <label for="cart_discount">Discount (Amount):</label>
-                                <input type="number" id="cart_discount" min="0" step="0.01" placeholder="Enter Discount"
-                                    onchange="applyDiscount()">
-                            </div>
+                        <div class="input-row">
+                            <label for="cart_discount">Discount (Amount):</label>
+                            <input type="number" id="cart_discount" min="0" step="0.01" placeholder="Enter Discount"
+                                onchange="applyDiscount()">
+                        </div>
                         <button class="pos-btn" id="checkout-btn" onclick="checkoutSale()">Checkout & Print
                             Invoice</button>
                         <br>
@@ -290,7 +290,64 @@
             </div>
 
 
+            <div class="pos-container">
+                <div class="card ">
+                    <div class="card-header latest-update-heading d-flex justify-content-between">
+                        <h4 class="latest-update-heading-title text-bold-500">Daily Sales</h4>
 
+                    </div>
+                    <div class="table-responsive">
+                        <table id="loginTable" class="table table-striped table-bordered zero-configuration">
+                            <thead>
+                                <tr>
+                                    <th>Sale #</th>
+                                    <th>Date</th>
+                                    <th>Customer/Vendor</th>
+                                    <th>Total</th>
+                                    <th>Items</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($sales as $sale)
+                                <tr>
+                                    <td>{{ $sale->id }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y, H:i') }}</td>
+                                    <td>
+                                        @if($sale->vendor)
+                                        Vendor: {{ $sale->vendor->name }}
+                                        @elseif($sale->customer_name)
+                                        Customer: {{ $sale->customer_name }}
+                                        @else
+                                        Walk-in
+                                        @endif
+                                    </td>
+                                    <td><strong>Rs. {{ number_format($sale->total_amount,2) }}</strong></td>
+                                    <td>
+                                        <a href="javascript:void(0)" class="sale-items-link"
+                                            data-sale="{{ $sale->id }}">
+                                            @foreach($sale->items as $item)
+                                            <li>
+                                                {{ $item->batch->accessory->name ?? '-' }} x{{ $item->quantity }}
+                                                ({{ number_format($item->price_per_unit,2) }} each)
+                                            </li>
+                                            @endforeach
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @if($sale->status == 'approved')
+                                        <span class="badge bg-success">Approved</span>
+                                        @else
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
 
 
@@ -298,6 +355,7 @@
         </div>
     </div>
 </div>
+
 <div id="loading-overlay" style="
     display:none; 
     position:fixed; 

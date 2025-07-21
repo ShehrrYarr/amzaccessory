@@ -92,7 +92,18 @@ public function pos()
 {
     $vendors = \App\Models\vendor::all();
     $batches = \App\Models\AccessoryBatch::with('accessory')->where('qty_remaining', '>', 0)->get();
-    return view('sales.pos', compact('vendors', 'batches'));
+
+     // Set timezone to Pakistan (Asia/Karachi)
+    $startOfDay = \Carbon\Carbon::now('Asia/Karachi')->startOfDay();
+    $endOfDay = \Carbon\Carbon::now('Asia/Karachi')->endOfDay();
+
+    // Fetch sales for today in PKT
+    $sales = \App\Models\Sale::with(['vendor', 'items.batch.accessory', 'user'])
+        ->whereBetween('sale_date', [$startOfDay, $endOfDay])
+        ->orderByDesc('id')
+        ->get();
+
+    return view('sales.pos', compact('vendors', 'batches','sales'));
 }
 public function accessoryReport()
 {
