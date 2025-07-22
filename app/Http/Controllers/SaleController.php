@@ -525,12 +525,31 @@ public function approved()
     return view('sales.approved', compact('sales'));
 }
 
-public function allSales()
+// public function allSales()
+// {
+//     // You may want to paginate this if you have many sales
+//     $sales = \App\Models\Sale::with(['vendor', 'items.batch.accessory', 'user'])->orderByDesc('id')->get();
+//     return view('sales.all', compact('sales'));
+// }
+
+public function allSales(Request $request)
 {
-    // You may want to paginate this if you have many sales
-    $sales = \App\Models\Sale::with(['vendor', 'items.batch.accessory', 'user'])->orderByDesc('id')->get();
+    // Start a query so you can add filters
+    $query = \App\Models\Sale::with(['vendor', 'items.batch.accessory', 'user']);
+
+    // Apply date filter if provided
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $start = $request->input('start_date') . ' 00:00:00';
+        $end = $request->input('end_date') . ' 23:59:59';
+        $query->whereBetween('sale_date', [$start, $end]);
+    }
+
+    $sales = $query->orderByDesc('id')->get();
+
+    // We’ll handle AJAX in later steps
     return view('sales.all', compact('sales'));
 }
+
 
 public function ajaxSaleItems($saleId)
 {

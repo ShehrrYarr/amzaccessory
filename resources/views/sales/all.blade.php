@@ -43,6 +43,19 @@
             </div>
             @endif
 
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request('start_date') }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request('end_date') }}">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" id="filterBtn" type="button">Filter</button>
+                    <button class="btn btn-secondary" id="resetBtn" type="button">Reset</button>
+                </div>
+            </div>
+
 
 
             <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-12 col-12 latest-update-tracking mt-1 ">
@@ -63,8 +76,9 @@
                                         <th>Status</th>
                                 </tr>
                             </thead>
-                           <tbody>
-                                @foreach($sales as $sale)
+                           <tbody id="sales-table-body">
+                            @include('sales.partials.table', ['sales' => $sales])
+                                {{-- @foreach($sales as $sale)
                                 <tr>
                                     <td>{{ $sale->id }}</td>
                                     <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y, H:i') }}</td>
@@ -96,7 +110,7 @@
                                         @endif
                                     </td>
                                 </tr>
-                                @endforeach      
+                                @endforeach       --}}
                                       </tbody>
                         </table>
                     </div>
@@ -109,6 +123,40 @@
 </div>
 
 <script>
+
+    $(document).ready(function() {
+    $('#filterBtn').on('click', function() {
+    var start = $('#start_date').val();
+    var end = $('#end_date').val();
+    
+    $.ajax({
+    url: '{{ route("sales.all") }}',
+    type: 'GET',
+    data: {start_date: start, end_date: end},
+    success: function(data) {
+    // Extract only the table body from the response
+    var html = $('<div>').html(data);
+        var newTbody = html.find('#sales-table-body').html();
+        $('#sales-table-body').html(newTbody ? newTbody : data); // fallback
+        }
+        });
+        });
+    
+        $('#resetBtn').on('click', function() {
+        $('#start_date').val('');
+        $('#end_date').val('');
+    
+        $.ajax({
+        url: '{{ route("sales.all") }}',
+        type: 'GET',
+        success: function(data) {
+        var html = $('<div>').html(data);
+            var newTbody = html.find('#sales-table-body').html();
+            $('#sales-table-body').html(newTbody ? newTbody : data);
+            }
+            });
+            });
+            });
     // document.addEventListener('DOMContentLoaded', function() {
     //     // When the "View Items" link is clicked
     //     document.querySelectorAll('.sale-items-link').forEach(function(link) {
