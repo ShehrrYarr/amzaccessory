@@ -481,19 +481,25 @@ public function invoice($id)
 
 public function approve($id)
 {
+    // Only user with ID 1 can approve
+    if (auth()->id() != 1) {
+        return redirect()->back()->with('danger', 'You can not approve this sale');
+    }
+
     $sale = Sale::findOrFail($id);
 
     // Only approve if not already approved
     if ($sale->status !== 'approved') {
         $sale->status = 'approved';
         $sale->approved_at = now();
-        $sale->approved_by = auth()->id(); // or set to admin id
+        $sale->approved_by = auth()->id();
         $sale->save();
 
         return redirect()->back()->with('success', 'Sale approved!');
     }
     return redirect()->back()->with('danger', 'Sale already approved!');
 }
+
 
 // Show pending sales
 public function pending()

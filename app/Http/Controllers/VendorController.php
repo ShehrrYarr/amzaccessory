@@ -17,9 +17,11 @@ class VendorController extends Controller
     {
         $this->middleware('auth');
     }
+
+
     public function showVendors()
     {
-        $vendors = vendor::with('creator')->get(); // eager load the user who added the vendor
+        $vendors = vendor::with('creator')->get(); 
         // dd($vendors);
         return view('showVendors', compact('vendors'));
     }
