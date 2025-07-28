@@ -376,13 +376,13 @@
 
 
 <script>
-    $(document).ready(function () {
-    $('#vendor_id').select2({
-    placeholder: "Select a vendor",
-    allowClear: true,
-    width: '100%'
-    });
-    });
+    // $(document).ready(function () {
+    // $('#vendor_id').select2({
+    // placeholder: "Select a vendor",
+    // allowClear: true,
+    // width: '100%'
+    // });
+    // });
 
     $(document).ready(function () {
     $('#manual_batch_select').select2({
@@ -400,13 +400,46 @@ scanBarcode();
 });
 
 
-document.getElementById('vendor_id').addEventListener('change', function() {
-const vendorId = this.value;
+// document.getElementById('vendor_id').addEventListener('change', function() {
+  
+// const vendorId = this.value;
+// const extraFields = document.getElementById('vendor-extra-fields');
+// const balanceInput = document.getElementById('vendor_balance');
+
+// if (vendorId) {
+// // Show extra fields
+// extraFields.style.display = '';
+// balanceInput.value = 'Loading...';
+
+// fetch(`/api/vendor-balance/${vendorId}`)
+// .then(res => res.json())
+// .then(data => {
+// balanceInput.value = data.balance;
+// })
+// .catch(() => {
+// balanceInput.value = 'Error loading balance';
+// });
+// } else {
+// // Hide fields and clear
+// extraFields.style.display = 'none';
+// balanceInput.value = '';
+// }
+// });
+
+$(document).ready(function () {
+$('#vendor_id').select2({
+placeholder: "Select a vendor",
+allowClear: true,
+width: '100%'
+});
+
+// Attach change event using jQuery
+$('#vendor_id').on('change', function () {
+const vendorId = $(this).val();
 const extraFields = document.getElementById('vendor-extra-fields');
 const balanceInput = document.getElementById('vendor_balance');
 
 if (vendorId) {
-// Show extra fields
 extraFields.style.display = '';
 balanceInput.value = 'Loading...';
 
@@ -419,10 +452,10 @@ balanceInput.value = data.balance;
 balanceInput.value = 'Error loading balance';
 });
 } else {
-// Hide fields and clear
 extraFields.style.display = 'none';
 balanceInput.value = '';
 }
+});
 });
 
 document.getElementById('customer_mobile').addEventListener('input', function(e) {
