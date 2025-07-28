@@ -269,38 +269,38 @@ public function checkout(Request $request)
         $pdf->save($publicPath);
         $publicUrl = url("invoices/{$fileName}");
 
-        // --- WhatsApp PDF Sending (for customer OR vendor) ---
-        $recipientMobile = null;
-        if (!empty($sale->customer_mobile)) {
-            $recipientMobile = $sale->customer_mobile;
-        } elseif (!empty($sale->vendor_id)) {
-            // Fetch vendor mobile_no if available
-            $vendor = \App\Models\Vendor::find($sale->vendor_id);
-            if ($vendor && !empty($vendor->mobile_no)) {
-                $recipientMobile = $vendor->mobile_no;
-            }
-        }
+        // // --- WhatsApp PDF Sending (for customer OR vendor) ---
+        // $recipientMobile = null;
+        // if (!empty($sale->customer_mobile)) {
+        //     $recipientMobile = $sale->customer_mobile;
+        // } elseif (!empty($sale->vendor_id)) {
+           
+        //     $vendor = \App\Models\Vendor::find($sale->vendor_id);
+        //     if ($vendor && !empty($vendor->mobile_no)) {
+        //         $recipientMobile = $vendor->mobile_no;
+        //     }
+        // }
 
-        if ($recipientMobile) {
-            $number = $recipientMobile;
-            $message = "Thank you for your purchase! Invoice #{$sale->id}, Amount: Rs. " . number_format($sale->total_amount, 2) . ".";
-            $media_url = $publicUrl;
-            $filename = $fileName;
+        // if ($recipientMobile) {
+        //     $number = $recipientMobile;
+        //     $message = "Thank you for your purchase! Invoice #{$sale->id}, Amount: Rs. " . number_format($sale->total_amount, 2) . ".";
+        //     $media_url = $publicUrl;
+        //     $filename = $fileName;
 
-            // 1. Send invoice (PDF)
-            dispatch(new \App\Jobs\SendWhatsAppMessageJob(
-                $number,
-                $message,
-                $media_url,
-                $filename
-            ));
+        //     // 1. Send invoice (PDF)
+        //     dispatch(new \App\Jobs\SendWhatsAppMessageJob(
+        //         $number,
+        //         $message,
+        //         $media_url,
+        //         $filename
+        //     ));
 
-            // 2. Send thank you message (plain text) — short delay!
-            dispatch(new \App\Jobs\SendWhatsAppMessageJob(
-                $number,
-                "Thank you for shopping from AMZ Mobiles Hasilpur, we'll be happy to see you again!"
-            ))->delay(now()->addSeconds(3));
-        }
+        //     // 2. Send thank you message (plain text) — short delay!
+        //     dispatch(new \App\Jobs\SendWhatsAppMessageJob(
+        //         $number,
+        //         "Thank you for shopping from AMZ Mobiles Hasilpur, we'll be happy to see you again!"
+        //     ))->delay(now()->addSeconds(3));
+        // }
 
         return response()->json(['success' => true, 'invoice_number' => $sale->id]);
 
