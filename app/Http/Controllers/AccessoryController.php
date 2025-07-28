@@ -26,7 +26,7 @@ class AccessoryController extends Controller
 {
     $companies = company::all();
     $groups = group::all();
-    $accessories = Accessory::with(['group', 'company','user'])->get();
+    $accessories = Accessory::with(['group', 'company', 'user', 'batches'])->get();
     return view('accessories.index', compact('accessories','companies','groups'));
 }
 

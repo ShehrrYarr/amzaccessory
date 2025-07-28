@@ -41,11 +41,10 @@
                                 @endforeach
                             </select>
                         </div>
-                        
+
                         <div class="mb-1">
                             <label for="pay_amount" class="form-label">Description (Optional)</label>
-                            <input type="text" class="form-control" name="description"
-                                placeholder="Enter Description">
+                            <input type="text" class="form-control" name="description" placeholder="Enter Description">
                         </div>
                         <div class="mb-1">
                             <label for="min_qty" class="form-label">Minimum Quantity</label>
@@ -115,7 +114,7 @@
 
                         <div class="mb-1">
                             <label for="description" class="form-label">Description</label>
-                            <input type="text" class="form-control" name="description" id="description" >
+                            <input type="text" class="form-control" name="description" id="description">
                         </div>
                         <div class="mb-1">
                             <label for="password" class="form-label">Edit Password</label>
@@ -178,6 +177,7 @@
                                     <th>Name</th>
                                     <th>Group</th>
                                     <th>Company</th>
+                                    <th>Remaining Qty</th>
                                     <th>Minimum Quantity</th>
                                     <th>Description</th>
 
@@ -192,6 +192,7 @@
                                     <td>{{ $accessory->name }}</td>
                                     <td>{{ $accessory->group->name ?? '-' }}</td>
                                     <td>{{ $accessory->company->name ?? '-' }}</td>
+                                    <td><strong>{{ $accessory->total_remaining }}</strong></td>
                                     <td>{{ $accessory->min_qty }}</td>
                                     <td>{{ $accessory->description }}</td>
                                     <td>

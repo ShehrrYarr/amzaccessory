@@ -23,6 +23,12 @@ public function batches()
     return $this->hasMany(AccessoryBatch::class);
 }
 
+public function getTotalRemainingAttribute()
+{
+    // Sum qty_remaining for all batches
+    return $this->batches->sum('qty_remaining');
+}
+
 public function user()
 {
     return $this->belongsTo(User::class);
