@@ -52,18 +52,18 @@
 
                         <div class="mb-1">
                             <label for="qty_purchased" class="form-label">Quantity Purchased</label>
-                            <input type="number" class="form-control" id="qty_purchased" name="qty_purchased" min="1" required>
+                            <input type="number" class="form-control" id="qty_purchased" name="qty_purchased" min="1"
+                                required>
                         </div>
 
                         <div class="mb-1">
                             <label for="purchase_price" class="form-label">Purchase Price (per unit)</label>
-                            <input type="number" class="form-control" id="purchase_price" name="purchase_price" step="0.01" min="0"
-                                required>
+                            <input type="number" class="form-control" id="purchase_price" name="purchase_price"
+                                step="0.01" min="0" required>
                         </div>
                         <div class="mb-1">
                             <label for="selling_price" class="form-label">Selling Price (per unit)</label>
-                            <input type="number" class="form-control" name="selling_price" step="0.01" min="0"
-                                required>
+                            <input type="number" class="form-control" name="selling_price" step="0.01" min="0" required>
                         </div>
                         <div class="mb-1">
                             <label for="pay_amount" class="form-label">Pay amount</label>
@@ -210,6 +210,7 @@
                                     <th>Qty Remaining</th>
                                     <th>Purchase Price</th>
                                     <th>Selling Price</th>
+                                    <th>Description</th>
                                     <th>Purchase Date</th>
                                     <th>Barcode</th>
                                     <th>Print Barcode</th>
@@ -228,6 +229,7 @@
                                     <td>{{ $batch->qty_remaining }}</td>
                                     <td>{{ $batch->purchase_price }}</td>
                                     <td>{{ $batch->selling_price }}</td>
+                                    <td>{{ $batch->description }}</td>
                                     <td>{{ $batch->purchase_date }}</td>
                                     <td>{{ $batch->barcode }}</td>
                                     <td>
@@ -256,7 +258,6 @@
 
 
 <script>
-
     const qtyInput = document.getElementById('qty_purchased');
     const priceInput = document.getElementById('purchase_price');
     const payAmountInput = document.getElementById('pay_amount');

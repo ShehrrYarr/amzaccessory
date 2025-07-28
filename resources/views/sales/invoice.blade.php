@@ -10,18 +10,24 @@
         rel="stylesheet">
     <style>
         @media print {
+            @page {
+                size: 80mm auto;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
 
             body,
             html {
-                width: 80mm;
-                margin: 0;
-                padding: 0;
+                width: 80mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .receipt {
-                width: 80mm;
-                margin: 0;
-                padding: 0;
+                width: 72mm !important;
+                margin-left: 4mm !important;
+                margin-right: 4mm !important;
+                padding: 0 !important;
             }
 
             .no-print {
@@ -150,7 +156,7 @@
             </tr>
             <tr>
                 <td class="bold">Mobile</td>
-                <td>{{ $sale->vendor->mobile_no ?? '-' }}</td>
+                <td>+{{ $sale->vendor->mobile_no ?? '-' }}</td>
             </tr>
             @elseif($sale->customer_name)
             <tr>
