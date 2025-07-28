@@ -27,6 +27,19 @@
                         <h4 class="latest-update-heading-title text-bold-500">Approved Sales</h4>
 
                     </div>
+
+                    <div class="ml-1">
+                        <form method="GET" action="{{ route('sales.approved') }}"
+                            class="mb-3 d-flex align-items-center">
+                            <input type="date" class="form-control mr-2" name="start_date"
+                                value="{{ request('start_date') }}" style="max-width: 180px;">
+                            <span class="mx-1">to</span>
+                            <input type="date" class="form-control mr-2" name="end_date"
+                                value="{{ request('end_date') }}" style="max-width: 180px;">
+                            <button type="submit" class="btn btn-primary mx-1">Filter</button>
+                            <a href="{{ route('sales.approved') }}" class="btn btn-secondary mx-1">Reset</a>
+                        </form>
+                    </div>
                     <div class="table-responsive">
                         <table id="loginTable" class="table table-striped table-bordered zero-configuration">
                             <thead>

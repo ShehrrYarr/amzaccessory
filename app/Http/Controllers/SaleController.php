@@ -518,15 +518,33 @@ public function pending()
 }
 
 // Show approved sales
-public function approved()
+// public function approved()
+// {
+//     $sales = Sale::with('items', 'vendor', 'user')
+//         ->where('status', 'approved')
+//         ->orderBy('approved_at', 'desc')
+//         ->get();
+
+//     return view('sales.approved', compact('sales'));
+// }
+
+public function approved(Request $request)
 {
-    $sales = Sale::with('items', 'vendor', 'user')
-        ->where('status', 'approved')
-        ->orderBy('approved_at', 'desc')
-        ->get();
+    $query = Sale::with('items', 'vendor', 'user')
+        ->where('status', 'approved');
+
+    // Filter by date range if provided
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $start = $request->input('start_date') . ' 00:00:00';
+        $end = $request->input('end_date') . ' 23:59:59';
+        $query->whereBetween('sale_date', [$start, $end]);
+    }
+
+    $sales = $query->orderBy('approved_at', 'desc')->get();
 
     return view('sales.approved', compact('sales'));
 }
+
 
 // public function allSales()
 // {
