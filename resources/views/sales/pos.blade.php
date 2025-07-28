@@ -376,6 +376,22 @@
 
 
 <script>
+    $(document).ready(function () {
+    $('#vendor_id').select2({
+    placeholder: "Select a vendor",
+    allowClear: true,
+    width: '100%'
+    });
+    });
+
+    $(document).ready(function () {
+    $('#manual_batch_select').select2({
+    placeholder: "Select a Batch",
+    allowClear: true,
+    width: '100%'
+    });
+    });
+
     document.getElementById('barcode_search').addEventListener('keydown', function(e) {
 if (e.key === 'Enter') {
 e.preventDefault(); // Prevent form submission if inside a form

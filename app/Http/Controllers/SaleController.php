@@ -151,6 +151,9 @@ public function salesReport(Request $request)
         'profit' => number_format($profit, 2)
     ]);
 }
+
+
+
 public function checkout(Request $request)
 {
     $data = $request->validate([
