@@ -260,14 +260,14 @@ public function checkout(Request $request)
         DB::commit();
 
         // --- PDF Generation ---
-        $pdf = Pdf::loadView('invoices.template', [
-            'sale' => $sale,
-            'items' => $data['items']
-        ]);
-        $fileName = "invoice_{$sale->id}.pdf";
-        $publicPath = public_path("invoices/{$fileName}");
-        $pdf->save($publicPath);
-        $publicUrl = url("invoices/{$fileName}");
+        // $pdf = Pdf::loadView('invoices.template', [
+        //     'sale' => $sale,
+        //     'items' => $data['items']
+        // ]);
+        // $fileName = "invoice_{$sale->id}.pdf";
+        // $publicPath = public_path("invoices/{$fileName}");
+        // $pdf->save($publicPath);
+        // $publicUrl = url("invoices/{$fileName}");
 
         // // --- WhatsApp PDF Sending (for customer OR vendor) ---
         // $recipientMobile = null;
