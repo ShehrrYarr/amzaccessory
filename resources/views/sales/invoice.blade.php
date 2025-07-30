@@ -210,7 +210,7 @@
         </div>
         <div class="divider"></div>
         <div class="center bold" style="font-size:13px;">
-            <span style="font-size:10px;">Powered by AMZ Mobiles POS</span><br>
+            <span style="font-size:10px;">Address: Baldia road Hasilpur</span><br>
             Thank you for shopping!
         </div>
         <div class="no-print center" style="margin-top:10px;">
