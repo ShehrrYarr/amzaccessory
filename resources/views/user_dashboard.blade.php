@@ -107,7 +107,7 @@
                                             </div>
                                         </div>
                                     </div> -->
-            @if($lowStockAccessories->count())
+            {{-- @if($lowStockAccessories->count())
             <div
                 style="margin: 24px 0; padding: 20px; background: #fff7e6; border: 1px solid #ffd580; border-radius: 12px;">
                 <h4 style="color: #b32d2e; margin-bottom: 12px;">
@@ -137,7 +137,41 @@
             @else
             <div style="margin: 24px 0; padding: 15px; background: #eafdea; border-radius: 12px; color:#267a23;">
                 All accessories are above their minimum quantity.
-            </div> @endif
+            </div> @endif --}}
+
+
+            @if($lowStockAccessories->count())
+            <div id="lowStockBox"
+                style="margin: 24px 0; padding: 20px; background: #fff7e6; border: 1px solid #ffd580; border-radius: 12px; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="color: #b32d2e; margin-bottom: 12px;">
+                        <i class="fas fa-exclamation-triangle"></i> Low Stock Reminder
+                    </h4>
+                    <button id="toggleStockBtn"
+                        style="background:#ffe28e;border:none;color:#b32d2e;padding:5px 16px;border-radius:5px;font-weight:bold;cursor:pointer;">
+                        Maximize
+                    </button>
+                </div>
+                <div style="overflow:hidden; transition: max-height 0.5s cubic-bezier(.68,-0.55,.27,1.55);"
+                    id="lowStockTableWrapper">
+                    <table class="low-stock-table" style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>Accessory Name</th>
+                                <th>Minimum Qty</th>
+                                <th>Current Stock</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="low-stock-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            @else
+            <div style="margin: 24px 0; padding: 15px; background: #eafdea; border-radius: 12px; color:#267a23;">
+                All accessories are above their minimum quantity.
+            </div>
+            @endif
 
             @php
             $userId = auth()->id();
@@ -272,6 +306,10 @@
                     color: #b32d2e;
                     font-weight: 600;
                 }
+                #lowStockTableWrapper {
+                overflow: hidden;
+                transition: max-height 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+                }
             </style>
 
 
@@ -292,6 +330,59 @@
 </div>
 
 <script>
+
+    let lowStockAccessories = @json($lowStockAccessories);
+    let showingAll = false;
+    
+    function renderLowStockTable(showAll = false) {
+    let tbody = document.getElementById('low-stock-tbody');
+    tbody.innerHTML = ''; // Clear
+    
+    let dataToShow = showAll ? lowStockAccessories : lowStockAccessories.slice(0, 5);
+    
+    dataToShow.forEach(item => {
+    let row = document.createElement('tr');
+    row.innerHTML = `
+    <td>${item.name}</td>
+    <td>${item.min_qty}</td>
+    <td class="low-stock-count">${item.stock}</td>
+    <td class="low-stock-status">Restock Needed!</td>
+    `;
+    tbody.appendChild(row);
+    });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+    renderLowStockTable();
+    
+    let btn = document.getElementById('toggleStockBtn');
+    let wrapper = document.getElementById('lowStockTableWrapper');
+    
+    // Initial wrapper max-height for collapsed state
+    let rowHeight = 38; // Estimate row height (px). Adjust if needed for your design.
+    let collapsedHeight = rowHeight * 5 + 40; // 5 rows + header
+    let expandedHeight = rowHeight * (lowStockAccessories.length) + 40; // all rows + header
+    
+    wrapper.style.maxHeight = collapsedHeight + 'px';
+    
+    if (!btn) return;
+    
+    btn.addEventListener('click', function () {
+    showingAll = !showingAll;
+    renderLowStockTable(showingAll);
+    
+    // Animate the height
+    if (showingAll) {
+    wrapper.style.maxHeight = expandedHeight + 'px';
+    btn.textContent = 'Minimize';
+    } else {
+    wrapper.style.maxHeight = collapsedHeight + 'px';
+    btn.textContent = 'Maximize';
+    }
+    });
+    
+    // Hide the button if 5 or fewer
+    if (lowStockAccessories.length <= 5) { btn.style.display='none' ; } });
 
 
 </script>
