@@ -130,8 +130,9 @@
 
 <body>
     <div class="receipt">
-        <div class="center shop-logo bold">AMZ Traders</div>
-        <div class="center main-label">Main Branch</div>
+        <div class="center shop-logo bold">AMZ</div>
+        <div class="center shop-logo bold">Shahzad Mobiles</div>
+        <div class="center main-label">Hasilpur Branch</div>
         <div class="center" style="font-size:12px; margin-bottom: 2px;">
             <span class="bold">Ph: 0322-3190100, 0301-7662525</span>
         </div>
@@ -209,8 +210,8 @@
         </div>
         <div class="divider"></div>
         <div class="center bold" style="font-size:13px;">
-            Thank you for shopping!<br>
-            <span style="font-size:10px;">Powered by AMZ Traders POS</span>
+            <span style="font-size:10px;">Powered by AMZ Mobiles POS</span><br>
+            Thank you for shopping!
         </div>
         <div class="no-print center" style="margin-top:10px;">
             <button onclick="window.print()" style="padding:5px 16px;font-size:13px;">Print</button>
