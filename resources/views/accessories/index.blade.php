@@ -161,6 +161,7 @@
                 {{ session('danger') }}
             </div>
             @endif
+           
 
             <button type="button" class="btn btn-primary ml-1" data-toggle="modal" data-target="#exampleModal">
                 <i class="bi bi-plus"></i> Add Accessory
