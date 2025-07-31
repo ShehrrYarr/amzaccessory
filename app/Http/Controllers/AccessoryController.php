@@ -47,6 +47,8 @@ public function store(Request $request)
     return redirect()->back()->with('success', 'Accessory Created Successfully.');
 }
 
+
+
 public function edit($id)
     {
         $filterId = Accessory::find($id);
@@ -70,13 +72,14 @@ public function edit($id)
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'description' => 'nullable|string',
+        'min_qty' => 'nullable|string',
         'group_id' => 'required|exists:groups,id',
         'company_id' => 'required|exists:companies,id',
     ]);
 
     $accessory->update($validated);
 
-    return redirect()->back()->with('success', 'Accessory Created Successfully.');
+    return redirect()->back()->with('success', 'Accessory Updated Successfully.');
  }
  else {
     return redirect()->back()->with('danger', 'Incorrect update password.');
