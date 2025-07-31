@@ -9,58 +9,46 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap"
         rel="stylesheet">
     <style>
-        @media print {
-            @page {
-                size: 80mm auto;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            body,
-            html {
-                width: 80mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .receipt {
-                width: 72mm !important;
-                margin-left: 4mm !important;
-                margin-right: 4mm !important;
-                padding: 0 !important;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-        }
-
-        body,
-        html {
-            width: 80mm;
-            margin: 0 auto;
-            padding: 0;
+        html,
+        body {
             background: #fff;
-            font-family: 'Poppins', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
         .receipt {
-            width: 70mm;
-            margin: 0;
+            width: 72mm;
+            margin: 16px auto;
             font-family: 'Poppins', Arial, sans-serif;
             font-size: 12px;
             color: #000;
         }
 
-        /* Urdu font for policy section */
-        .urdu {
-            font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', serif;
-            font-size: 13px;
-            font-weight: bold;
-            direction: rtl;
-            text-align: right;
-            letter-spacing: 0.2px;
-            line-height: 1.65;
+        @media print {
+
+            html,
+            body {
+                background: #fff;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 80mm !important;
+                min-height: unset !important;
+                display: block;
+            }
+
+            .receipt {
+                width: 72mm !important;
+                margin: 0 auto !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
         }
 
         .center {
@@ -86,23 +74,29 @@
             margin: 8px 0;
         }
 
-        table {
+        .receipt-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 4px;
         }
 
-        th,
-        td {
+        .receipt-table th,
+        .receipt-table td {
+            border: 1px solid #000;
+            padding: 2px 3px;
             font-size: 13px;
-            padding: 2px 0;
+            word-break: break-word;
+            text-align: center;
         }
 
-        th {
-            border-bottom: 1px solid #000;
+        .receipt-table th {
+            background: #fafafa;
         }
 
-        td {
-            color: #000;
+        .receipt-table td:first-child,
+        .receipt-table th:first-child {
+            text-align: left;
         }
 
         .totals {
@@ -125,6 +119,22 @@
             margin-bottom: 6px;
             margin-top: 6px;
         }
+
+        .urdu {
+            font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', serif;
+            font-size: 13px;
+            font-weight: bold;
+            direction: rtl;
+            text-align: right;
+            letter-spacing: 0.2px;
+            line-height: 1.65;
+        }
+
+        .address-note {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 4px;
+        }
     </style>
 </head>
 
@@ -137,7 +147,7 @@
             <span class="bold">Ph: 0322-3190100, 0301-7662525</span>
         </div>
         <div class="divider"></div>
-        <table>
+        <table style="width:100%;margin-bottom:0;">
             <tr>
                 <td class="bold">Invoice#</td>
                 <td>{{ $sale->id }}</td>
@@ -171,29 +181,28 @@
             @endif
         </table>
         <div class="divider"></div>
-        <table>
+        <table class="receipt-table">
             <thead>
                 <tr>
-                    <th style="text-align:left;">Item</th>
-                    <th style="text-align:right;">Qty</th>
-                    <th style="text-align:right;">Price</th>
-                    <th style="text-align:right;">Total</th>
+                    <th style="width:44%;">Item</th>
+                    <th style="width:14%;">Qty</th>
+                    <th style="width:21%;">Price</th>
+                    <th style="width:21%;">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($sale->items as $item)
                 <tr>
-                    <td style="max-width:38mm;white-space:normal;word-break:break-word;" class="bold">{{
-                        $item->batch->accessory->name ?? '-' }}</td>
-                    <td style="text-align:right;" class="bold">{{ $item->quantity }}</td>
-                    <td style="text-align:right;" class="bold">{{ number_format($item->price_per_unit,0) }}</td>
-                    <td style="text-align:right;" class="bold">{{ number_format($item->subtotal,0) }}</td>
+                    <td style="text-align:left;">{{ $item->batch->accessory->name ?? '-' }}</td>
+                    <td>{{ $item->quantity }}</td>
+                    <td>{{ number_format($item->price_per_unit,0) }}</td>
+                    <td>{{ number_format($item->subtotal,0) }}</td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
         <div class="divider"></div>
-        <table>
+        <table style="width:100%;">
             <tr>
                 <td class="totals total-label" colspan="3">TOTAL</td>
                 <td class="totals total-value">Rs. {{ number_format($sale->total_amount) }}</td>
@@ -209,8 +218,8 @@
             استعمال شدہ اور کھلی ہوئی چیز کی واپسی نہیں ہوگی •<br>
         </div>
         <div class="divider"></div>
+        <div class="address-note"><b>Address: Baldia road Hasilpur</b></div>
         <div class="center bold" style="font-size:13px;">
-            <span style="font-size:10px;">Address: Baldia road Hasilpur</span><br>
             Thank you for shopping!
         </div>
         <div class="no-print center" style="margin-top:10px;">
