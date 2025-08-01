@@ -225,7 +225,7 @@
                                         <ul class="menu-content">
                                                 <li class="@if (\Request::is('petty-cash')) active @endif"><a
                                                                 class="menu-item" href="/petty-cash"
-                                                                data-i18n="1 columns">Companies</a>
+                                                                data-i18n="1 columns">Petty Cash</a>
                                                 </li>
                                               
 
