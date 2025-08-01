@@ -12,6 +12,7 @@ use App\Http\Controllers\VendorController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\CustomerMessageController;
 use App\Http\Controllers\LoginHistoryController;
+use App\Http\Controllers\PettyCashController;
 
 
 use Illuminate\Support\Facades\Route;
@@ -180,6 +181,10 @@ Route::post('/sales/{sale}/return', [SaleController::class, 'processReturn'])->n
 Route::get('/sales/refunds', [SaleController::class, 'refundsPage'])->name('sales.refunds');
 
 // Route::post('/sales/{sale}/return', [SaleController::class, 'returnItems'])->name('sales.return');
+
+//Petty Cash Routes
+Route::get('/petty-cash', [PettyCashController::class, 'index'])->name('pettycash.index');
+Route::post('/petty-cash', [PettyCashController::class, 'store'])->name('pettycash.store');
 
 
 
