@@ -181,6 +181,9 @@ public function checkout(Request $request)
     //         ['name' => $data['customer_name']]
     //     );
     // }
+      $customerName   = $data['customer_name'] ?? null;
+    $customerMobile = $data['customer_mobile'] ?? null;
+
 if (!$data['vendor_id']) {
     // Set default customer name if empty
     $customerName = empty($data['customer_name']) ? 'Walk In Customer' : $data['customer_name'];
