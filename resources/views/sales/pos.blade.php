@@ -308,43 +308,62 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach($sales as $sale)
-                                <tr>
-                                    <td>{{ $sale->id }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y, H:i') }}</td>
-                                    <td>
-                                        @if($sale->vendor)
-                                        Vendor: {{ $sale->vendor->name }}
-                                        @elseif($sale->customer_name)
-                                        Customer: {{ $sale->customer_name }}
-                                        @else
-                                        Walk-in
-                                        @endif
-                                    </td>
-                                    <td><strong>Rs. {{ number_format($sale->total_amount,2) }}</strong></td>
-                                    <td>
-                                        <a href="javascript:void(0)" class="sale-items-link"
-                                            data-sale="{{ $sale->id }}">
+                           <tbody>
+                            @foreach($sales as $sale)
+                            @php
+                            $subtotal = $sale->items->sum('subtotal');
+                            $discount = (float) ($sale->discount_amount ?? 0);
+                            @endphp
+                            <tr>
+                                <td>{{ $sale->id }}</td>
+                                <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y, H:i') }}</td>
+                                <td>
+                                    @if($sale->vendor)
+                                    Vendor: {{ $sale->vendor->name }}
+                                    @elseif($sale->customer_name)
+                                    Customer: {{ $sale->customer_name }}
+                                    @else
+                                    Walk-in
+                                    @endif
+                                </td>
+                                <td>
+                                    <strong>Rs. {{ number_format($sale->total_amount, 2) }}</strong>
+                                    @if($discount > 0)
+                                    <div style="font-size: 12px; color: #666; margin-top: 4px; line-height: 1.2;">
+                                        <div>Subtotal: Rs. {{ number_format($subtotal, 2) }}</div>
+                                        <div>Discount: - Rs. {{ number_format($discount, 2) }}</div>
+                                    </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a href="javascript:void(0)" class="sale-items-link" data-sale="{{ $sale->id }}">
+                                        <ul style="list-style:none; margin:0; padding:0;">
                                             @foreach($sale->items as $item)
                                             <li>
                                                 {{ $item->batch->accessory->name ?? '-' }} x{{ $item->quantity }}
-                                                ({{ number_format($item->price_per_unit,2) }} each)
+                                                ({{ number_format($item->price_per_unit, 2) }} each
+                                                @if($discount > 0)
+                                                — before discount
+                                                @endif
+                                                )
                                             </li>
                                             @endforeach
-                                        </a>
-                                    </td>
-                                    <td>
-                                        @if($sale->status == 'approved')
-                                        <span class="badge bg-success">Approved</span>
-                                        @else
-                                        <span class="badge bg-warning text-dark">Pending</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
+                                        </ul>
+                                    </a>
+                                </td>
+                                <td>
+                                    @if($sale->status == 'approved')
+                                    <span class="badge bg-success">Approved</span>
+                                    @else
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
                         </table>
+
+                       
                     </div>
                 </div>
             </div>
@@ -376,305 +395,237 @@
 
 
 <script>
-    // $(document).ready(function () {
-    // $('#vendor_id').select2({
-    // placeholder: "Select a vendor",
-    // allowClear: true,
-    // width: '100%'
-    // });
-    // });
-
-    $(document).ready(function () {
+    // --- INIT --- //
+  $(document).ready(function () {
     $('#manual_batch_select').select2({
-    placeholder: "Select a Batch",
-    allowClear: true,
-    width: '100%'
+      placeholder: "Select a Batch",
+      allowClear: true,
+      width: '100%'
     });
+
+    $('#vendor_id').select2({
+      placeholder: "Select a vendor",
+      allowClear: true,
+      width: '100%'
     });
 
-    document.getElementById('barcode_search').addEventListener('keydown', function(e) {
-if (e.key === 'Enter') {
-e.preventDefault(); // Prevent form submission if inside a form
-scanBarcode();
-}
-});
+    // Vendor extra fields + balance fetch
+    $('#vendor_id').on('change', function () {
+      const vendorId = $(this).val();
+      const extraFields = document.getElementById('vendor-extra-fields');
+      const balanceInput = document.getElementById('vendor_balance');
 
+      if (vendorId) {
+        extraFields.style.display = '';
+        balanceInput.value = 'Loading...';
 
-// document.getElementById('vendor_id').addEventListener('change', function() {
-  
-// const vendorId = this.value;
-// const extraFields = document.getElementById('vendor-extra-fields');
-// const balanceInput = document.getElementById('vendor_balance');
+        fetch(`/api/vendor-balance/${vendorId}`)
+          .then(res => res.json())
+          .then(data => { balanceInput.value = data.balance; })
+          .catch(() => { balanceInput.value = 'Error loading balance'; });
+      } else {
+        extraFields.style.display = 'none';
+        balanceInput.value = '';
+      }
+    });
+  });
 
-// if (vendorId) {
-// // Show extra fields
-// extraFields.style.display = '';
-// balanceInput.value = 'Loading...';
-
-// fetch(`/api/vendor-balance/${vendorId}`)
-// .then(res => res.json())
-// .then(data => {
-// balanceInput.value = data.balance;
-// })
-// .catch(() => {
-// balanceInput.value = 'Error loading balance';
-// });
-// } else {
-// // Hide fields and clear
-// extraFields.style.display = 'none';
-// balanceInput.value = '';
-// }
-// });
-
-$(document).ready(function () {
-$('#vendor_id').select2({
-placeholder: "Select a vendor",
-allowClear: true,
-width: '100%'
-});
-
-// Attach change event using jQuery
-$('#vendor_id').on('change', function () {
-const vendorId = $(this).val();
-const extraFields = document.getElementById('vendor-extra-fields');
-const balanceInput = document.getElementById('vendor_balance');
-
-if (vendorId) {
-extraFields.style.display = '';
-balanceInput.value = 'Loading...';
-
-fetch(`/api/vendor-balance/${vendorId}`)
-.then(res => res.json())
-.then(data => {
-balanceInput.value = data.balance;
-})
-.catch(() => {
-balanceInput.value = 'Error loading balance';
-});
-} else {
-extraFields.style.display = 'none';
-balanceInput.value = '';
-}
-});
-});
-
-document.getElementById('customer_mobile').addEventListener('input', function(e) {
-// Only allow numbers
-this.value = this.value.replace(/\D/g, '');
-
-// Force start with 923 (replace if not)
-if (!this.value.startsWith('923')) {
-this.value = '923' + this.value.replace(/^923*/, '');
-}
-// Limit to 12 chars
-if (this.value.length > 12) {
-this.value = this.value.slice(0, 12);
-}
-});
-    // --- JS Placeholders (to be replaced with your AJAX logic) ---
-    
-   
-    let cart = [];
-    function scanBarcode() {
-        let code = document.getElementById('barcode_search').value.trim();
-        if (!code) return alert('Enter or scan a barcode!');
-        
-        // Use the batchData loaded from Blade
-        let batch = window.batchData[code];
-        if (!batch) return alert('Barcode not found in available batches!');
-        
-        let qty = prompt('Quantity to add from batch ' + code + ' (Max: ' + batch.qty_remaining + '):', 1);
-        if (!qty || isNaN(qty) || qty <= 0 || qty> batch.qty_remaining) return alert('Invalid quantity!');
-        
-            cart.push({
-            barcode: batch.barcode,
-            accessory: batch.accessory,
-            qty: Number(qty),
-            price: batch.price,
-            subtotal: batch.price * qty
-            });
-            renderCart();
-            document.getElementById('barcode_search').value = ''; // Clear after adding
+  // Enter triggers scan
+  document.getElementById('barcode_search').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      scanBarcode();
     }
-  function addSelectedBatch() {
-    let select = document.getElementById('manual_batch_select');
-    let code = select.value;
-    if (!code) return alert('Select a batch to add!');
+  });
 
-    // Use real batch data
-    let batch = window.batchData[code];
-    if (!batch) return alert('Batch not found!');
+  // Mobile input normalization
+  document.getElementById('customer_mobile').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '');
+    if (!this.value.startsWith('923')) {
+      this.value = '923' + this.value.replace(/^923*/, '');
+    }
+    if (this.value.length > 12) {
+      this.value = this.value.slice(0, 12);
+    }
+  });
 
-    let qty = prompt('Quantity to add from batch ' + code + ' (Max: ' + batch.qty_remaining + '):', 1);
+  // Show/Hide mobile for walk-in
+  document.getElementById('vendor_id').addEventListener('change', function () {
+    const mobileRow = document.getElementById('customer_mobile_row');
+    if (!this.value) {
+      mobileRow.style.display = '';
+    } else {
+      mobileRow.style.display = 'none';
+      document.getElementById('customer_mobile').value = '';
+    }
+  });
+  document.getElementById('vendor_id').dispatchEvent(new Event('change'));
+
+  // --- CART LOGIC --- //
+  let cart = [];
+
+  function scanBarcode() {
+    const code = document.getElementById('barcode_search').value.trim();
+    if (!code) return alert('Enter or scan a barcode!');
+
+    const batch = window.batchData[code];
+    if (!batch) return alert('Barcode not found in available batches!');
+
+    const qty = prompt('Quantity to add from batch ' + code + ' (Max: ' + batch.qty_remaining + '):', 1);
     if (!qty || isNaN(qty) || qty <= 0 || qty > batch.qty_remaining) return alert('Invalid quantity!');
-    
-    cart.push({
+
+    // If item already in cart, just increase qty
+    const existing = cart.find(i => i.barcode === batch.barcode);
+    if (existing) {
+      existing.qty = Number(existing.qty) + Number(qty);
+    } else {
+      cart.push({
         barcode: batch.barcode,
         accessory: batch.accessory,
         qty: Number(qty),
-        price: batch.price,
-        subtotal: batch.price * qty
-    });
-    renderCart();
-}
-
-function applyDiscount() {
-// Get the discount value entered by the user (in percentage or flat amount)
-let discountValue = parseFloat(document.getElementById('cart_discount').value);
-
-if (isNaN(discountValue) || discountValue < 0) return; // If no valid discount, do nothing // Calculate the total amount of the items in the cart
-     let totalAmount=cart.reduce((total, item)=> total + item.subtotal, 0);
-
-    // Apply the discount proportionally across all items
-    cart.forEach(item => {
-    // Calculate the proportional discount for each item
-    let proportionalDiscount = (item.subtotal / totalAmount) * discountValue;
-
-    // Update the price for the item after discount
-    item.price -= proportionalDiscount / item.qty; // Adjusting price per unit
-    item.subtotal = item.price * item.qty; // Recalculate subtotal after price change
-    });
-
-    // Update the display of the cart
-    renderCart();
+        price: Number(batch.price) // keep the original unit price
+      });
     }
 
-    function renderCart() {
-    let tbody = document.querySelector('#sale-cart-table tbody');
+    renderCart();
+    document.getElementById('barcode_search').value = '';
+  }
+
+  function addSelectedBatch() {
+    const select = document.getElementById('manual_batch_select');
+    const code = select.value;
+    if (!code) return alert('Select a batch to add!');
+
+    const batch = window.batchData[code];
+    if (!batch) return alert('Batch not found!');
+
+    const qty = prompt('Quantity to add from batch ' + code + ' (Max: ' + batch.qty_remaining + '):', 1);
+    if (!qty || isNaN(qty) || qty <= 0 || qty > batch.qty_remaining) return alert('Invalid quantity!');
+
+    const existing = cart.find(i => i.barcode === batch.barcode);
+    if (existing) {
+      existing.qty = Number(existing.qty) + Number(qty);
+    } else {
+      cart.push({
+        barcode: batch.barcode,
+        accessory: batch.accessory,
+        qty: Number(qty),
+        price: Number(batch.price)
+      });
+    }
+
+    renderCart();
+  }
+
+  // Subtotal helper
+  function cartSubtotal() {
+    return cart.reduce((t, item) => t + (Number(item.price) * Number(item.qty)), 0);
+  }
+
+  // Discount input just re-renders; it never changes prices
+  function applyDiscount() {
+    renderCart();
+  }
+
+  // Rebuild table & totals
+  function renderCart() {
+    const tbody = document.querySelector('#sale-cart-table tbody');
     tbody.innerHTML = "";
-    let total = 0;
 
     cart.forEach((item, i) => {
-        total += item.subtotal;
-        tbody.innerHTML += `<tr>
-            <td>${item.barcode}</td>
-            <td>${item.accessory}</td>
-            <td><input type="number" value="${item.qty}" min="1" style="width:50px;" onchange="updateQuantity(${i}, this.value)"></td>
-            <td><input type="number" value="${item.price.toFixed(2)}" min="0" step="0.01" style="width:70px;" onchange="updatePrice(${i}, this.value)"></td>
-            <td>${item.subtotal.toFixed(2)}</td>
-            <td><button type="button" onclick="removeCartItem(${i})" style="background:#f33;color:#fff;padding:4px 10px;border:none;border-radius:3px;">Remove</button></td>
-        </tr>`;
+      const lineSubtotal = Number(item.price) * Number(item.qty);
+      tbody.innerHTML += `<tr>
+        <td>${item.barcode}</td>
+        <td>${item.accessory}</td>
+        <td><input type="number" value="${item.qty}" min="1" style="width:50px;" onchange="updateQuantity(${i}, this.value)"></td>
+        <td><input type="number" value="${Number(item.price).toFixed(2)}" min="0" step="0.01" style="width:70px;" onchange="updatePrice(${i}, this.value)"></td>
+        <td>${lineSubtotal.toFixed(2)}</td>
+        <td><button type="button" onclick="removeCartItem(${i})" style="background:#f33;color:#fff;padding:4px 10px;border:none;border-radius:3px;">Remove</button></td>
+      </tr>`;
     });
-    document.getElementById('cart-total').textContent = total.toFixed(2);
-}
 
+    const subtotal = cartSubtotal();
+    const discount = parseFloat(document.getElementById('cart_discount').value) || 0;
+    const grandTotal = Math.max(subtotal - discount, 0);
 
-// function renderCart() {
-// let tbody = document.querySelector('#sale-cart-table tbody');
-// tbody.innerHTML = "";
-// let total = 0;
-// cart.forEach((item, i) => {
-// total += item.subtotal;
-// tbody.innerHTML += `<tr>
-//     <td>${item.barcode}</td>
-//     <td>${item.accessory}</td>
-//     <td><input type="number" value="${item.qty}" min="1" style="width:50px;"
-//             onchange="updateQuantity(${i}, this.value)"></td>
-//     <td><input type="number" value="${item.price}" min="0" step="0.01" style="width:70px;"
-//             onchange="updatePrice(${i}, this.value)"></td>
-//     <td>${item.subtotal.toFixed(2)}</td>
-//     <td><button type="button" onclick="removeCartItem(${i})"
-//             style="background:#f33;color:#fff;padding:4px 10px;border:none;border-radius:3px;">Remove</button></td>
-// </tr>`;
-// });
-// document.getElementById('cart-total').textContent = total.toFixed(2);
-// }
+    document.getElementById('cart-total').textContent = grandTotal.toFixed(2);
+  }
 
-function updateQuantity(i, newQty) {
-    if (isNaN(newQty) || newQty <= 0) return; // Prevent invalid input
-    cart[i].qty = Number(newQty);
-    cart[i].subtotal = cart[i].qty * cart[i].price;
+  function updateQuantity(i, newQty) {
+    const q = Number(newQty);
+    if (isNaN(q) || q <= 0) return;
+    cart[i].qty = q;
     renderCart();
-}
+  }
 
-function updatePrice(i, newPrice) {
-    if (isNaN(newPrice) || newPrice <= 0) return; // Prevent invalid input
-    cart[i].price = Number(newPrice);
-    cart[i].subtotal = cart[i].qty * cart[i].price;
+  function updatePrice(i, newPrice) {
+    const p = Number(newPrice);
+    if (isNaN(p) || p < 0) return;
+    cart[i].price = p;
     renderCart();
-}
-    function removeCartItem(i) {
-        cart.splice(i, 1);
-        renderCart();
-    }
+  }
 
+  function removeCartItem(i) {
+    cart.splice(i, 1);
+    renderCart();
+  }
 
-    function checkoutSale() {
+  // --- CHECKOUT --- //
+  function checkoutSale() {
+    if (!cart.length) return alert("Cart is empty!");
 
-      if (!cart.length) return alert("Cart is empty!");
-        document.getElementById('loading-overlay').style.display = 'flex';
-          const btn = document.getElementById('checkout-btn');
-           btn.disabled = true;
-            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
-        
-        // Gather customer/vendor info
-        let vendor_id = document.getElementById('vendor_id').value;
-        let customer_name = document.getElementById('customer_name').value;
-        let customer_mobile = document.getElementById('customer_mobile') ? document.getElementById('customer_mobile').value : '';
-        let pay_amount = document.getElementById('pay_amount') ? document.getElementById('pay_amount').value : "";
-        
-        // Build payload
-        let payload = {
-        vendor_id: vendor_id,
-        customer_name: customer_name,
-        customer_mobile: customer_mobile,
-        pay_amount: pay_amount,
-        items: cart
-        };
+    document.getElementById('loading-overlay').style.display = 'flex';
+    const btn = document.getElementById('checkout-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
 
-   
-        
-       fetch('/pos/checkout', {
-    method: 'POST',
-    headers: {
+    const vendor_id = document.getElementById('vendor_id').value || null;
+    const customer_name = document.getElementById('customer_name').value || null;
+    const customer_mobile = document.getElementById('customer_mobile') ? document.getElementById('customer_mobile').value : '';
+    const pay_amount = document.getElementById('pay_amount') ? document.getElementById('pay_amount').value : '';
+    const discount_amount = parseFloat(document.getElementById('cart_discount').value) || 0;
+
+    const payload = {
+      vendor_id,
+      customer_name,
+      customer_mobile,
+      pay_amount,
+      cart_discount: discount_amount,
+      items: cart.map(i => ({
+        barcode: i.barcode,
+        qty: Number(i.qty),
+        price: Number(i.price) // server can ignore and use batch price if desired
+      }))
+    };
+
+    fetch('/pos/checkout', {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': '{{ csrf_token() }}'
-    },
-    body: JSON.stringify(payload)
-})
-.then(async res => {
-    let contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-        return res.json();
-    } else {
-        let text = await res.text();
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(async res => {
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) return res.json();
+        const text = await res.text();
         throw new Error("Server did not return JSON. Response was: " + text.substring(0, 400));
-    }
-})
-.then(data => {
-    if (data.success) {
-        // Open invoice in a new tab
-        window.open('/pos/invoice/' + data.invoice_number, '_blank');
-        // Reload current page after short delay (so user sees invoice opens)
-        setTimeout(function() {
-            window.location.reload();
-        }, 700); // 700ms is enough, you can adjust
-    } else {
-        console.error(data);
-        alert("Error: " + (data.message || 'Sale failed.'));
-    }
-})
-.catch(error => {
-    console.error(error);
-    alert("Unexpected error: " + error.message);
-});
-    }
-    // --- END JS Placeholders ---
-
-    // Show/Hide customer mobile field if 'Walk-in Customer' is selected
-    document.getElementById('vendor_id').addEventListener('change', function() {
-    const mobileRow = document.getElementById('customer_mobile_row');
-    if (!this.value) {
-    // Walk-in Customer (vendor_id is blank)
-    mobileRow.style.display = '';
-    } else {
-    mobileRow.style.display = 'none';
-    document.getElementById('customer_mobile').value = '';
-    }
-    });
-    
-    // On page load, trigger the change in case the default is Walk-in
-    document.getElementById('vendor_id').dispatchEvent(new Event('change'));
+      })
+      .then(data => {
+        if (data.success) {
+          window.open('/pos/invoice/' + data.invoice_number, '_blank');
+          setTimeout(() => window.location.reload(), 700);
+        } else {
+          console.error(data);
+          alert("Error: " + (data.message || 'Sale failed.'));
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        alert("Unexpected error: " + error.message);
+      });
+  }
 </script>
 
 

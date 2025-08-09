@@ -57,7 +57,7 @@
                                     <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                          <tbody>
                                 @forelse($sales as $sale)
                                 <tr>
                                     <td>{{ $sale->id }}</td>
@@ -78,20 +78,36 @@
                                         {{ $sale->customer_mobile }}
                                         @endif
                                     </td>
-                                    <td><strong>Rs. {{ number_format($sale->total_amount,2) }}</strong></td>
+                                    <td>
+                                        @php
+                                        $subtotal = $sale->items->sum('subtotal');
+                                        $discount = (float) ($sale->discount_amount ?? 0);
+                                        @endphp
+                                        <strong>Rs. {{ number_format($sale->total_amount, 2) }}</strong>
+                                        @if($discount > 0)
+                                        <div style="font-size:12px;color:#666; line-height:1.2; margin-top:4px;">
+                                            <div>Subtotal: Rs. {{ number_format($subtotal, 2) }}</div>
+                                            <div>Discount: - Rs. {{ number_format($discount, 2) }}</div>
+                                        </div>
+                                        @endif
+                                    </td>
                                     <td>
                                         <ul style="margin:0; padding-left: 1rem;">
                                             @foreach($sale->items as $item)
                                             <li>
                                                 {{ $item->batch->accessory->name ?? '-' }} x{{ $item->quantity }}
-                                                ({{ number_format($item->price_per_unit,2) }} each)
+                                                ({{ number_format($item->price_per_unit, 2) }} each
+                                                @if(($sale->discount_amount ?? 0) > 0)
+                                                — before discount
+                                                @endif
+                                                )
                                             </li>
                                             @endforeach
                                         </ul>
                                     </td>
                                     <td>{{ $sale->user->name ?? '-' }}</td>
                                     <td>
-                                        <span class="badge bg-warning text-dark">Approved</span>
+                                        <span class="badge bg-warning text-dark">Pending</span>
                                     </td>
                                     <td>
                                         <form action="{{ route('sales.approve', $sale->id) }}" method="POST">

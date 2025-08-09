@@ -201,14 +201,35 @@
                 @endforeach
             </tbody>
         </table>
-        <div class="divider"></div>
-        <table style="width:100%;">
-            <tr>
-                <td class="totals total-label" colspan="3">TOTAL</td>
-                <td class="totals total-value">Rs. {{ number_format($sale->total_amount) }}</td>
-            </tr>
-        </table>
-        <div class="divider"></div>
+       <div class="divider"></div>
+    
+    @php
+    // Gross = sum of line subtotals before discount
+    $grossTotal = $sale->items->sum('subtotal');
+    $discount = (float) ($sale->discount_amount ?? 0);
+    $netTotal = max($grossTotal - $discount, 0);
+    @endphp
+    
+    <table style="width:100%;">
+        <tr>
+            <td class="totals total-label" colspan="3">SUBTOTAL</td>
+            <td class="totals total-value">Rs. {{ number_format($grossTotal) }}</td>
+        </tr>
+    
+        @if($discount > 0)
+        <tr>
+            <td class="totals total-label" colspan="3">DISCOUNT</td>
+            <td class="totals total-value">- Rs. {{ number_format($discount) }}</td>
+        </tr>
+        @endif
+    
+        <tr>
+            <td class="totals total-label" colspan="3">TOTAL</td>
+            <td class="totals total-value">Rs. {{ number_format($netTotal) }}</td>
+        </tr>
+    </table>
+    
+    <div class="divider"></div>
         <div class="policy">
             <div class="bold center" style="font-size:11.5px; margin-bottom:2px;">Return & Exchange Policy:</div>
         </div>
