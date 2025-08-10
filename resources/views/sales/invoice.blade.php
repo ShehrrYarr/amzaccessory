@@ -204,32 +204,57 @@
        <div class="divider"></div>
     
     @php
-    // Gross = sum of line subtotals before discount
+    // Subtotal BEFORE discount
     $grossTotal = $sale->items->sum('subtotal');
     $discount = (float) ($sale->discount_amount ?? 0);
     $netTotal = max($grossTotal - $discount, 0);
-    @endphp
     
-    <table style="width:100%;">
-        <tr>
-            <td class="totals total-label" colspan="3">SUBTOTAL</td>
-            <td class="totals total-value">Rs. {{ number_format($grossTotal) }}</td>
-        </tr>
+    // Only vendors can pay on invoice
+    $isVendorSale = !empty($sale->vendor);
+    $paid = $isVendorSale ? (float) ($sale->pay_amount ?? 0) : 0.0;
+    // clamp just in case
+    if ($paid < 0) $paid=0.0; if ($paid> $netTotal) $paid = $netTotal;
     
-        @if($discount > 0)
-        <tr>
-            <td class="totals total-label" colspan="3">DISCOUNT</td>
-            <td class="totals total-value">- Rs. {{ number_format($discount) }}</td>
-        </tr>
-        @endif
+        $remaining = $isVendorSale ? max($netTotal - $paid, 0) : 0.0;
+        @endphp
     
-        <tr>
-            <td class="totals total-label" colspan="3">TOTAL</td>
-            <td class="totals total-value">Rs. {{ number_format($netTotal) }}</td>
-        </tr>
-    </table>
+        <table style="width:100%;">
+            <tr>
+                <td class="totals total-label" colspan="3">SUBTOTAL</td>
+                <td class="totals total-value">Rs. {{ number_format($grossTotal, 0) }}</td>
+            </tr>
     
-    <div class="divider"></div>
+            @if($discount > 0)
+            <tr>
+                <td class="totals total-label" colspan="3">DISCOUNT</td>
+                <td class="totals total-value">- Rs. {{ number_format($discount, 0) }}</td>
+            </tr>
+            @endif
+    
+            <tr>
+                <td class="totals total-label" colspan="3">TOTAL</td>
+                <td class="totals total-value">Rs. {{ number_format($netTotal, 0) }}</td>
+            </tr>
+    
+            @if($isVendorSale)
+            <tr>
+                <td class="totals total-label" colspan="3">PAID</td>
+                <td class="totals total-value">Rs. {{ number_format($paid, 0) }}</td>
+            </tr>
+            <tr>
+                <td class="totals total-label" colspan="3">REMAINING</td>
+                <td class="totals total-value">
+                    @if($remaining == 0 && $netTotal > 0)
+                    PAID IN FULL
+                    @else
+                    Rs. {{ number_format($remaining, 0) }}
+                    @endif
+                </td>
+            </tr>
+            @endif
+        </table>
+    
+        <div class="divider"></div>
         <div class="policy">
             <div class="bold center" style="font-size:11.5px; margin-bottom:2px;">Return & Exchange Policy:</div>
         </div>

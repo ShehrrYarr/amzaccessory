@@ -16,6 +16,7 @@ class Sale extends Model
         'customer_mobile',
         'sale_date',
         'total_amount',
+        'pay_amount',  
         'user_id','status', 'approved_at', 'approved_by','discount_amount'
     ];  
     

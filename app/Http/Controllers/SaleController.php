@@ -154,6 +154,9 @@ public function salesReport(Request $request)
 
 
 
+
+
+
 // public function checkout(Request $request)
 // {
 //     $data = $request->validate([
@@ -163,166 +166,127 @@ public function salesReport(Request $request)
 //         'items'            => 'required|array|min:1',
 //         'items.*.barcode'  => 'required|string',
 //         'items.*.qty'      => 'required|integer|min:1',
-//         'items.*.price'    => 'required|numeric|min:0',
-//         'items.*.accessory'=> 'required|string',
+//         'items.*.price'    => 'required|numeric|min:0', // keep if you allow manual price override
+//         'items.*.accessory'=> 'nullable|string',        // not used server-side; optional
 //         'pay_amount'       => 'nullable|numeric|min:0',
-//         'cart_discount'    => 'nullable|numeric|min:0',
+//         'cart_discount'    => 'nullable|numeric|min:0', // FLAT amount off the whole cart
 //     ]);
 
-//     // if (!$data['vendor_id']) {
-//     //     if (empty($data['customer_name'])) {
-//     //         return response()->json(['success' => false, 'message' => 'Enter customer name for walk-in.']);
-//     //     }
-//     //     if (empty($data['customer_mobile'])) {
-//     //         return response()->json(['success' => false, 'message' => 'Enter mobile number for walk-in customer.']);
-//     //     }
-//     //     CustomerInfo::firstOrCreate(
-//     //         ['mobile' => $data['customer_mobile']],
-//     //         ['name' => $data['customer_name']]
-//     //     );
-//     // }
-//       $customerName   = $data['customer_name'] ?? null;
+//     // Normalize basic customer info (walk-in fallback)
+//     $customerName   = $data['customer_name']   ?? null;
 //     $customerMobile = $data['customer_mobile'] ?? null;
 
-// if (!$data['vendor_id']) {
-//     // Set default customer name if empty
-//     $customerName = empty($data['customer_name']) ? 'Walk In Customer' : $data['customer_name'];
-//     // Set default customer mobile if empty
-//     $customerMobile = empty($data['customer_mobile']) ? '00000000' : $data['customer_mobile'];
-    
-//     CustomerInfo::firstOrCreate(
-//         ['mobile' => $customerMobile],
-//         ['name' => $customerName]
-//     );
-// }
+//     if (empty($data['vendor_id'])) {
+//         $customerName   = $customerName   ?: 'Walk In Customer';
+//         $customerMobile = $customerMobile ?: '00000000';
 
+//         \App\Models\CustomerInfo::firstOrCreate(
+//             ['mobile' => $customerMobile],
+//             ['name'   => $customerName]
+//         );
+//     }
 
-//     DB::beginTransaction();
 //     try {
-//         $sale = Sale::create([
-//             'vendor_id'       => $data['vendor_id'],
-//             'customer_name'   => $customerName,
-//             'customer_mobile' => $data['customer_mobile'] ?? null,
-//             'sale_date'       => now(),
-//             'total_amount'    => 0,
-//             'user_id'         => auth()->id(),
-//         ]);
+//         $sale = \DB::transaction(function () use ($data, $customerName, $customerMobile) {
 
-//         $total = 0;
-//         $totalDiscount = 0;
-//         foreach ($data['items'] as $item) {
-//             $batch = AccessoryBatch::where('barcode', $item['barcode'])->first();
-//             if (!$batch || $batch->qty_remaining < $item['qty']) {
-//                 DB::rollBack();
-//                 return response()->json(['success' => false, 'message' => 'Insufficient stock for batch ' . $item['barcode']]);
+//             // Create sale shell
+//             $sale = \App\Models\Sale::create([
+//                 'vendor_id'       => $data['vendor_id'] ?? null,
+//                 'customer_name'   => $customerName,
+//                 'customer_mobile' => $customerMobile,
+//                 'sale_date'       => now(),
+//                 'total_amount'    => 0,     // set after we compute totals
+//                 'discount_amount' => 0,     // set after we compute totals
+//                 'user_id'         => auth()->id(),
+//                 'status'          => 'pending',
+//                 'approved_at'     => null,
+//                 'approved_by'     => null,
+//             ]);
+
+//             $total = 0;
+
+//             foreach ($data['items'] as $item) {
+//                 // Lock the batch row to prevent race conditions
+//                 /** @var \App\Models\AccessoryBatch|null $batch */
+//                 $batch = \App\Models\AccessoryBatch::where('barcode', $item['barcode'])
+//                     ->lockForUpdate()
+//                     ->first();
+
+//                 if (!$batch) {
+//                     throw new \Exception('Batch not found for barcode ' . $item['barcode']);
+//                 }
+//                 if ($batch->qty_remaining < $item['qty']) {
+//                     throw new \Exception('Insufficient stock for batch ' . $item['barcode'] .
+//                                          '. Remaining: ' . $batch->qty_remaining);
+//                 }
+
+//                 $qty = (int) $item['qty'];
+
+//                 // Which price should be authoritative?
+//                 // If you allow manual override in UI, use posted price; otherwise use batch price.
+//                 $unitPrice = (float) $item['price']; // or: (float) $batch->selling_price;
+
+//                 $lineSubtotal = $unitPrice * $qty;
+//                 $total += $lineSubtotal;
+
+//                 // Persist line
+//                 \App\Models\SaleItem::create([
+//                     'sale_id'            => $sale->id,
+//                     'accessory_batch_id' => $batch->id,
+//                     'accessory_id'       => $batch->accessory_id,
+//                     'quantity'           => $qty,
+//                     'price_per_unit'     => $unitPrice,
+//                     'subtotal'           => $lineSubtotal,
+//                     'user_id'            => auth()->id(),
+//                 ]);
+
+//                 // Decrement stock
+//                 $batch->decrement('qty_remaining', $qty);
 //             }
-//             $batch->qty_remaining -= $item['qty'];
-//             $batch->save();
 
-//             $subtotal = $item['qty'] * $item['price'];
-//             $total += $subtotal;
+//             // Apply FLAT cart discount
+//             $cartDiscount = (float) ($data['cart_discount'] ?? 0);
+//             if ($cartDiscount < 0) $cartDiscount = 0;
+//             if ($cartDiscount > $total) $cartDiscount = $total;
 
-//             $itemDiscount = $item['discount'] ?? 0;
-//             $totalDiscount += $itemDiscount;
+//             $sale->total_amount    = $total - $cartDiscount;
+//             $sale->discount_amount = $cartDiscount;
+//             $sale->save();
 
-//             $subtotalAfterDiscount = $subtotal - $itemDiscount;
-
-//             SaleItem::create([
-//                 'sale_id'           => $sale->id,
-//                 'accessory_batch_id'=> $batch->id,
-//                 'accessory_id'      => $batch->accessory_id,
-//                 'quantity'          => $item['qty'],
-//                 'price_per_unit'    => $item['price'],
-//                 'subtotal'          => $subtotal,
-//                 'user_id'           => auth()->id(),
-//             ]);
-//         }
-
-//         // Cart-level discount (if present)
-//         $cartDiscount = $data['cart_discount'] ?? 0;
-//         if ($cartDiscount > 0) {
-//             $totalAmountWithDiscount = $total - ($total * $cartDiscount / 100);
-//         } else {
-//             $totalAmountWithDiscount = $total;
-//         }
-//         $sale->total_amount = $totalAmountWithDiscount;
-//         $sale->discount_amount = $totalDiscount;
-//         $sale->save();
-
-//         // ====== ACCOUNTS ENTRIES (NEW) ======
-//         if (!empty($data['vendor_id'])) {
-//             // 1. Debit: vendor owes this sale amount
-//             \App\Models\Accounts::create([
-//                 'vendor_id'   => $data['vendor_id'],
-//                 'Debit'       => $sale->total_amount,
-//                 'Credit'      => 0,
-//                 'description' => "Sale Invoice #{$sale->id}",
-//                 'created_by'  => auth()->id(),
-//             ]);
-//             // 2. Credit: If pay_amount given, vendor pays this amount
-//             if (!empty($data['pay_amount'])) {
+//             // ACCOUNTS ENTRIES (vendor credit/debit)
+//             if (!empty($data['vendor_id'])) {
+//                 // Vendor owes the net sale amount (Debit)
 //                 \App\Models\Accounts::create([
 //                     'vendor_id'   => $data['vendor_id'],
-//                     'Debit'       => 0,
-//                     'Credit'      => $data['pay_amount'],
-//                     'description' => "Payment for Invoice #{$sale->id}",
+//                     'Debit'       => $sale->total_amount,
+//                     'Credit'      => 0,
+//                     'description' => "Sale Invoice #{$sale->id}",
 //                     'created_by'  => auth()->id(),
 //                 ]);
+
+//                 // If they pay now, record payment (Credit)
+//                 if (!empty($data['pay_amount']) && (float)$data['pay_amount'] > 0) {
+//                     \App\Models\Accounts::create([
+//                         'vendor_id'   => $data['vendor_id'],
+//                         'Debit'       => 0,
+//                         'Credit'      => (float)$data['pay_amount'],
+//                         'description' => "Payment for Invoice #{$sale->id}",
+//                         'created_by'  => auth()->id(),
+//                     ]);
+//                 }
 //             }
-//         }
-//         // ====== END ACCOUNTS ENTRIES ======
 
-//         DB::commit();
+//             return $sale;
+//         });
 
-//         // --- PDF Generation ---
-//         // $pdf = Pdf::loadView('invoices.template', [
-//         //     'sale' => $sale,
-//         //     'items' => $data['items']
-//         // ]);
-//         // $fileName = "invoice_{$sale->id}.pdf";
-//         // $publicPath = public_path("invoices/{$fileName}");
-//         // $pdf->save($publicPath);
-//         // $publicUrl = url("invoices/{$fileName}");
+//         return response()->json([
+//             'success'        => true,
+//             'invoice_number' => $sale->id,
+//         ]);
 
-//         // // --- WhatsApp PDF Sending (for customer OR vendor) ---
-//         // $recipientMobile = null;
-//         // if (!empty($sale->customer_mobile)) {
-//         //     $recipientMobile = $sale->customer_mobile;
-//         // } elseif (!empty($sale->vendor_id)) {
-           
-//         //     $vendor = \App\Models\Vendor::find($sale->vendor_id);
-//         //     if ($vendor && !empty($vendor->mobile_no)) {
-//         //         $recipientMobile = $vendor->mobile_no;
-//         //     }
-//         // }
-
-//         // if ($recipientMobile) {
-//         //     $number = $recipientMobile;
-//         //     $message = "Thank you for your purchase! Invoice #{$sale->id}, Amount: Rs. " . number_format($sale->total_amount, 2) . ".";
-//         //     $media_url = $publicUrl;
-//         //     $filename = $fileName;
-
-//         //     // 1. Send invoice (PDF)
-//         //     dispatch(new \App\Jobs\SendWhatsAppMessageJob(
-//         //         $number,
-//         //         $message,
-//         //         $media_url,
-//         //         $filename
-//         //     ));
-
-//         //     // 2. Send thank you message (plain text) — short delay!
-//         //     dispatch(new \App\Jobs\SendWhatsAppMessageJob(
-//         //         $number,
-//         //         "Thank you for shopping from AMZ Mobiles Hasilpur, we'll be happy to see you again!"
-//         //     ))->delay(now()->addSeconds(3));
-//         // }
-
-//         return response()->json(['success' => true, 'invoice_number' => $sale->id]);
-
-//     } catch (\Exception $e) {
-//         DB::rollBack();
-//         \Log::error('Checkout Error: ' . $e->getMessage());
-//         return response()->json(['success' => false, 'message' => $e->getMessage()]);
+//     } catch (\Throwable $e) {
+//         \Log::error('Checkout Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+//         return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
 //     }
 // }
 
@@ -336,10 +300,10 @@ public function checkout(Request $request)
         'items'            => 'required|array|min:1',
         'items.*.barcode'  => 'required|string',
         'items.*.qty'      => 'required|integer|min:1',
-        'items.*.price'    => 'required|numeric|min:0', // keep if you allow manual price override
-        'items.*.accessory'=> 'nullable|string',        // not used server-side; optional
+        'items.*.price'    => 'required|numeric|min:0',
+        'items.*.accessory'=> 'nullable|string',
         'pay_amount'       => 'nullable|numeric|min:0',
-        'cart_discount'    => 'nullable|numeric|min:0', // FLAT amount off the whole cart
+        'cart_discount'    => 'nullable|numeric|min:0',
     ]);
 
     // Normalize basic customer info (walk-in fallback)
@@ -365,8 +329,9 @@ public function checkout(Request $request)
                 'customer_name'   => $customerName,
                 'customer_mobile' => $customerMobile,
                 'sale_date'       => now(),
-                'total_amount'    => 0,     // set after we compute totals
-                'discount_amount' => 0,     // set after we compute totals
+                'total_amount'    => 0,
+                'discount_amount' => 0,
+                'pay_amount'      => 0, // new field
                 'user_id'         => auth()->id(),
                 'status'          => 'pending',
                 'approved_at'     => null,
@@ -376,8 +341,6 @@ public function checkout(Request $request)
             $total = 0;
 
             foreach ($data['items'] as $item) {
-                // Lock the batch row to prevent race conditions
-                /** @var \App\Models\AccessoryBatch|null $batch */
                 $batch = \App\Models\AccessoryBatch::where('barcode', $item['barcode'])
                     ->lockForUpdate()
                     ->first();
@@ -391,15 +354,11 @@ public function checkout(Request $request)
                 }
 
                 $qty = (int) $item['qty'];
-
-                // Which price should be authoritative?
-                // If you allow manual override in UI, use posted price; otherwise use batch price.
-                $unitPrice = (float) $item['price']; // or: (float) $batch->selling_price;
+                $unitPrice = (float) $item['price']; // or $batch->selling_price
 
                 $lineSubtotal = $unitPrice * $qty;
                 $total += $lineSubtotal;
 
-                // Persist line
                 \App\Models\SaleItem::create([
                     'sale_id'            => $sale->id,
                     'accessory_batch_id' => $batch->id,
@@ -410,7 +369,6 @@ public function checkout(Request $request)
                     'user_id'            => auth()->id(),
                 ]);
 
-                // Decrement stock
                 $batch->decrement('qty_remaining', $qty);
             }
 
@@ -419,13 +377,24 @@ public function checkout(Request $request)
             if ($cartDiscount < 0) $cartDiscount = 0;
             if ($cartDiscount > $total) $cartDiscount = $total;
 
-            $sale->total_amount    = $total - $cartDiscount;
+            $netTotal = $total - $cartDiscount;
+
+            // Determine pay_amount
+            $rawPay = (float) ($data['pay_amount'] ?? 0);
+            if (empty($data['vendor_id'])) {
+                $pay = 0.0;
+            } else {
+                $pay = max(0.0, min($rawPay, $netTotal));
+            }
+
+            // Save totals + pay_amount
+            $sale->total_amount    = $netTotal;
             $sale->discount_amount = $cartDiscount;
+            $sale->pay_amount      = $pay;
             $sale->save();
 
-            // ACCOUNTS ENTRIES (vendor credit/debit)
+            // ACCOUNTS ENTRIES
             if (!empty($data['vendor_id'])) {
-                // Vendor owes the net sale amount (Debit)
                 \App\Models\Accounts::create([
                     'vendor_id'   => $data['vendor_id'],
                     'Debit'       => $sale->total_amount,
@@ -434,12 +403,11 @@ public function checkout(Request $request)
                     'created_by'  => auth()->id(),
                 ]);
 
-                // If they pay now, record payment (Credit)
-                if (!empty($data['pay_amount']) && (float)$data['pay_amount'] > 0) {
+                if ($pay > 0) {
                     \App\Models\Accounts::create([
                         'vendor_id'   => $data['vendor_id'],
                         'Debit'       => 0,
-                        'Credit'      => (float)$data['pay_amount'],
+                        'Credit'      => $pay,
                         'description' => "Payment for Invoice #{$sale->id}",
                         'created_by'  => auth()->id(),
                     ]);
@@ -459,159 +427,6 @@ public function checkout(Request $request)
         return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
     }
 }
-
-
-// public function checkout(Request $request)
-// {
-//     $data = $request->validate([
-//         'vendor_id'        => 'nullable|exists:vendors,id',
-//         'customer_name'    => 'nullable|string|max:255',
-//         'customer_mobile'  => 'nullable|string|max:20',
-//         'items'            => 'required|array|min:1',
-//         'items.*.barcode'  => 'required|string',
-//         'items.*.qty'      => 'required|integer|min:1',
-//         'items.*.price'    => 'required|numeric|min:0',
-//         'items.*.accessory'=> 'required|string',
-//         'pay_amount'       => 'nullable|numeric|min:0', 
-//         'cart_discount'    => 'nullable|numeric|min:0',
-//     ]);
-
-//     if (!$data['vendor_id']) {
-//         if (empty($data['customer_name'])) {
-//             return response()->json(['success' => false, 'message' => 'Enter customer name for walk-in.']);
-//         }
-//         if (empty($data['customer_mobile'])) {
-//             return response()->json(['success' => false, 'message' => 'Enter mobile number for walk-in customer.']);
-//         }
-//         CustomerInfo::firstOrCreate(
-//             ['mobile' => $data['customer_mobile']],
-//             ['name' => $data['customer_name']]
-//         );
-//     }
-
-//     DB::beginTransaction();
-//     try {
-//         $sale = Sale::create([
-//             'vendor_id'       => $data['vendor_id'],
-//             'customer_name'   => $data['customer_name'],
-//             'customer_mobile' => $data['customer_mobile'] ?? null,
-//             'sale_date'       => now(),
-//             'total_amount'    => 0,
-//             'user_id'         => auth()->id(),
-//         ]);
-
-//         $total = 0;
-//         $totalDiscount = 0; 
-//         foreach ($data['items'] as $item) {
-//             $batch = AccessoryBatch::where('barcode', $item['barcode'])->first();
-//             if (!$batch || $batch->qty_remaining < $item['qty']) {
-//                 DB::rollBack();
-//                 return response()->json(['success' => false, 'message' => 'Insufficient stock for batch ' . $item['barcode']]);
-//             }
-//             $batch->qty_remaining -= $item['qty'];
-//             $batch->save();
-
-//             $subtotal = $item['qty'] * $item['price']; // Original subtotal before discount
-//             $total += $subtotal;
-
-//             // Item-level discount (if any) - this can be an item discount passed from frontend
-//             $itemDiscount = $item['discount'] ?? 0;  // Optional item-level discount
-//             $totalDiscount += $itemDiscount;  // Adding item-level discount to the total
-
-//             // Apply item-level discount to subtotal
-//             $subtotalAfterDiscount = $subtotal - $itemDiscount;
-
-//             SaleItem::create([
-//                 'sale_id'           => $sale->id,
-//                 'accessory_batch_id'=> $batch->id,
-//                 'accessory_id'      => $batch->accessory_id,
-//                 'quantity'          => $item['qty'],
-//                 'price_per_unit'    => $item['price'],
-//                 'subtotal'          => $subtotal,
-//                 'user_id'           => auth()->id(),
-//             ]);
-//         }
-
-//         // Apply cart-level discount if present (percentage)
-//         $cartDiscount = $data['cart_discount'] ?? 0;
-//         if ($cartDiscount > 0) {
-//             // Apply the cart discount to the total amount
-//             $totalAmountWithDiscount = $total - ($total * $cartDiscount / 100);
-//         } else {
-//             // If no cart discount, use the original total
-//             $totalAmountWithDiscount = $total;
-//         }
-//                 // Save the discount and total amount
-//         $sale->total_amount = $totalAmountWithDiscount;
-//         $sale->discount_amount = $totalDiscount;  // Store the total discount applied
-//         $sale->save();
-
-
-//         // ====== ACCOUNTS ENTRIES (NEW) ======
-//         if (!empty($data['vendor_id'])) {
-//             // 1. Debit: vendor owes this sale amount
-//             \App\Models\Accounts::create([
-//                 'vendor_id'   => $data['vendor_id'],
-//                 'Debit'       => $sale->total_amount,
-//                 'Credit'      => 0,
-//                 'description' => "Sale Invoice #{$sale->id}",
-//                 'created_by'  => auth()->id(),
-//             ]);
-//             // 2. Credit: If pay_amount given, vendor pays this amount
-//             if (!empty($data['pay_amount'])) {
-//                 \App\Models\Accounts::create([
-//                     'vendor_id'   => $data['vendor_id'],
-//                     'Debit'       => 0,
-//                     'Credit'      => $data['pay_amount'],
-//                     'description' => "Payment for Invoice #{$sale->id}",
-//                     'created_by'  => auth()->id(),
-//                 ]);
-//             }
-//         }
-//         // ====== END ACCOUNTS ENTRIES ======
-
-//         DB::commit();
-
-//         // --- PDF Generation ---
-//         $pdf = Pdf::loadView('invoices.template', [
-//             'sale' => $sale,
-//             'items' => $data['items']
-//         ]);
-//         $fileName = "invoice_{$sale->id}.pdf";
-//         $publicPath = public_path("invoices/{$fileName}");
-//         $pdf->save($publicPath);
-//         $publicUrl = url("invoices/{$fileName}");
-
-//         // --- WhatsApp PDF Sending (queued for production) ---
-//         if (!empty($sale->customer_mobile)) {
-//             $number = $sale->customer_mobile;
-//             $message = "Thank you for your purchase! Invoice #{$sale->id}, Amount: Rs. " . number_format($sale->total_amount, 2) . ".";
-//             $media_url = $publicUrl;
-//             $filename = $fileName;
-
-//             // 1. Send invoice (PDF)
-//             dispatch(new \App\Jobs\SendWhatsAppMessageJob(
-//                 $number,
-//                 $message,
-//                 $media_url,
-//                 $filename
-//             ));
-
-//             // 2. Send thank you message (as plain text) — add a short delay for separation!
-//             dispatch(new \App\Jobs\SendWhatsAppMessageJob(
-//                 $number,
-//                 "Thank you for shopping from AMZ Mobiles Hasilpur, we'll be happy to see you again!"
-//             ))->delay(now()->addSeconds(3));
-//         }
-
-//         return response()->json(['success' => true, 'invoice_number' => $sale->id]);
-
-//     } catch (\Exception $e) {
-//         DB::rollBack();
-//         \Log::error('Checkout Error: ' . $e->getMessage());
-//         return response()->json(['success' => false, 'message' => $e->getMessage()]);
-//     }
-// }
 
 
 
