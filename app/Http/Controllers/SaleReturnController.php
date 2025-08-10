@@ -10,6 +10,12 @@ use App\Models\SaleReturn;
 
 class SaleReturnController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    
     public function showReturnForm($saleId)
 {
     $sale = \App\Models\Sale::with('items.batch.accessory')->findOrFail($saleId);

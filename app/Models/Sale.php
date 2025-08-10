@@ -37,4 +37,9 @@ public function returns()
     return $this->hasMany(\App\Models\SaleReturn::class);
 }
 
+public function payments()
+{
+    return $this->hasMany(\App\Models\SalePayment::class);
+}
+
 }

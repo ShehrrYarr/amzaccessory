@@ -281,6 +281,39 @@
                                 <input type="text" id="vendor_balance" class="form-control" readonly>
                             </div>
                         </div>
+
+                        <div id="payment-section" style="margin-top:20px;">
+                          
+                        
+                          <div class="mb-2">
+                            <label class="d-block mb-1">Payment Method:</label>
+                            <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                              <label style="display:flex; gap:6px; align-items:center;">
+                                <input type="radio" name="payment_method" value="counter" checked>
+                                <span>Counter (Cash)</span>
+                              </label>
+                              <label style="display:flex; gap:6px; align-items:center;">
+                                <input type="radio" name="payment_method" value="bank">
+                                <span>Bank</span>
+                              </label>
+                        
+                              <div id="bank-select-wrap" style="display:none; min-width:260px;">
+                                <select id="bank_id" class="form-control">
+                                  <option value="">Select Bank</option>
+                                  @foreach($banks as $bank)
+                                  <option value="{{ $bank->id }}">
+                                    {{ $bank->name }}{{ $bank->account_no ? ' — '.$bank->account_no : '' }}
+                                  </option>
+                                  @endforeach
+                                </select>
+                              </div>
+                        
+                              <div id="bank-ref-wrap" style="display:none; min-width:220px;">
+                                <input type="text" id="bank_reference" class="form-control" placeholder="Reference / Slip # (optional)">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                     </div>
 
 
@@ -295,8 +328,26 @@
                     <div class="card-header latest-update-heading d-flex justify-content-between">
                         <h4 class="latest-update-heading-title text-bold-500">Daily Sales</h4>
                         <div>
-                            <h4>Total Selling Price: Rs. {{ number_format($totalSellingPrice, 2) }}</h4>
-                            <h4>Total Paid Price: Rs. {{ number_format($totalPaidPrice, 2) }}</h4>
+                          <h4>Total Selling Price: Rs. {{ number_format($totalSellingPrice, 2) }}</h4>
+                          <h4>Total Paid Price: Rs. {{ number_format($totalPaidPrice, 2) }}</h4>
+                        
+                          <div style="margin-top:8px;">
+                            <span class="badge bg-secondary" style="font-size:0.95rem;">Counter: Rs. {{ number_format($counterTotal, 2)
+                              }}</span>
+                            <span class="badge bg-primary" style="font-size:0.95rem; margin-left:6px;">Bank: Rs. {{ number_format($bankTotal, 2)
+                              }}</span>
+                          </div>
+                        
+                          @if(isset($bankBreakdown) && $bankBreakdown->count())
+                          <div style="margin-top:6px; font-size:0.95rem; color:#333;">
+                            <strong>By Bank:</strong>
+                            @foreach($bankBreakdown as $bk)
+                            <span class="badge bg-light text-dark" style="margin-left:6px;">
+                              {{ $bk['name'] }}: Rs. {{ number_format($bk['total'], 2) }}
+                            </span>
+                            @endforeach
+                          </div>
+                          @endif
                         </div>
 
                     </div>
@@ -308,6 +359,7 @@
                                     <th>Date</th>
                                     <th>Customer/Vendor</th>
                                     <th>Total</th>
+                                    <th>Payments</th>
                                     <th>Items</th>
                                     <th>Status</th>
                                 </tr>
@@ -338,6 +390,31 @@
                                         <div>Discount: - Rs. {{ number_format($discount, 2) }}</div>
                                     </div>
                                     @endif
+                                </td>
+                                <td>
+                                  @if($sale->payments->isEmpty())
+                                  <span class="badge bg-light text-dark">No Payment</span>
+                                  @else
+                                  <ul style="list-style:none; margin:0; padding:0;">
+                                    @foreach($sale->payments as $p)
+                                    <li>
+                                      @if($p->method === 'bank')
+                                      <span class="badge bg-primary">Bank</span>
+                                      <span>
+                                        {{ $p->bank->name ?? 'Bank' }}
+                                        — Rs. {{ number_format($p->amount, 2) }}
+                                        @if(!empty($p->reference_no))
+                                        (Ref: {{ $p->reference_no }})
+                                        @endif
+                                      </span>
+                                      @else
+                                      <span class="badge bg-secondary">Counter</span>
+                                      <span>Rs. {{ number_format($p->amount, 2) }}</span>
+                                      @endif
+                                    </li>
+                                    @endforeach
+                                  </ul>
+                                  @endif
                                 </td>
                                 <td>
                                     <a href="javascript:void(0)" class="sale-items-link" data-sale="{{ $sale->id }}">
@@ -412,7 +489,13 @@
       allowClear: true,
       width: '100%'
     });
-
+document.addEventListener('change', function(e) {
+if (e.target && e.target.name === 'payment_method') {
+const isBank = e.target.value === 'bank';
+document.getElementById('bank-select-wrap').style.display = isBank ? '' : 'none';
+document.getElementById('bank-ref-wrap').style.display = isBank ? '' : 'none';
+}
+});
     // Vendor extra fields + balance fetch
     $('#vendor_id').on('change', function () {
       const vendorId = $(this).val();
@@ -576,60 +659,130 @@
 
   // --- CHECKOUT --- //
   function checkoutSale() {
-    if (!cart.length) return alert("Cart is empty!");
+  if (!cart.length) return alert("Cart is empty!");
 
-    document.getElementById('loading-overlay').style.display = 'flex';
-    const btn = document.getElementById('checkout-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+  // Lock UI
+  document.getElementById('loading-overlay').style.display = 'flex';
+  const btn = document.getElementById('checkout-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
 
-    const vendor_id = document.getElementById('vendor_id').value || null;
-    const customer_name = document.getElementById('customer_name').value || null;
-    const customer_mobile = document.getElementById('customer_mobile') ? document.getElementById('customer_mobile').value : '';
-    const pay_amount = document.getElementById('pay_amount') ? document.getElementById('pay_amount').value : '';
-    const discount_amount = parseFloat(document.getElementById('cart_discount').value) || 0;
+  // Basics
+  const vendor_id       = document.getElementById('vendor_id').value || null;
+  const customer_name   = document.getElementById('customer_name').value || null;
+  const customer_mobile = document.getElementById('customer_mobile') ? document.getElementById('customer_mobile').value : '';
+  const discount_amount = parseFloat(document.getElementById('cart_discount').value) || 0;
 
-    const payload = {
-      vendor_id,
-      customer_name,
-      customer_mobile,
-      pay_amount,
-      cart_discount: discount_amount,
-      items: cart.map(i => ({
-        barcode: i.barcode,
-        qty: Number(i.qty),
-        price: Number(i.price) // server can ignore and use batch price if desired
-      }))
-    };
+  // Compute net total (client-side for walk-in payment build)
+  const subtotal = cart.reduce((t, it) => t + (Number(it.price) * Number(it.qty)), 0);
+  const netTotal = Math.max(subtotal - discount_amount, 0);
 
-    fetch('/pos/checkout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-      },
-      body: JSON.stringify(payload)
-    })
-      .then(async res => {
-        const contentType = res.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) return res.json();
-        const text = await res.text();
-        throw new Error("Server did not return JSON. Response was: " + text.substring(0, 400));
-      })
-      .then(data => {
-        if (data.success) {
-          window.open('/pos/invoice/' + data.invoice_number, '_blank');
-          setTimeout(() => window.location.reload(), 700);
-        } else {
-          console.error(data);
-          alert("Error: " + (data.message || 'Sale failed.'));
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        alert("Unexpected error: " + error.message);
+  // Payment UI
+  const pay_amount_el   = document.getElementById('pay_amount'); // only visible for vendor
+  const raw_pay_amount  = pay_amount_el ? parseFloat(pay_amount_el.value || '0') : 0;
+
+  let method = 'counter';
+  const methodInput = document.querySelector('input[name="payment_method"]:checked');
+  if (methodInput) method = methodInput.value;
+
+  const bank_id_el   = document.getElementById('bank_id');
+  const bank_ref_el  = document.getElementById('bank_reference');
+  const bank_id      = bank_id_el ? bank_id_el.value : '';
+  const reference_no = bank_ref_el ? bank_ref_el.value.trim() : '';
+
+  // Build payments[]
+  const payments = [];
+  if (vendor_id) {
+    // Vendor: optional partial payment
+    if (raw_pay_amount > 0) {
+      if (method === 'bank' && !bank_id) {
+        alert('Please select a bank for the bank payment.');
+        btn.disabled = false;
+        btn.innerHTML = 'Checkout & Print Invoice';
+        document.getElementById('loading-overlay').style.display = 'none';
+        return;
+      }
+      payments.push({
+        method: method === 'bank' ? 'bank' : 'counter',
+        bank_id: method === 'bank' ? Number(bank_id) : null,
+        amount: Number(raw_pay_amount),
+        reference_no: method === 'bank' ? (reference_no || null) : null
       });
+    }
+  } else {
+    // Walk‑in: always record a full payment for the net total
+    if (method === 'bank' && !bank_id) {
+      alert('Please select a bank for the bank payment.');
+      btn.disabled = false;
+      btn.innerHTML = 'Checkout & Print Invoice';
+      document.getElementById('loading-overlay').style.display = 'none';
+      return;
+    }
+    payments.push({
+      method: method === 'bank' ? 'bank' : 'counter',
+      bank_id: method === 'bank' ? Number(bank_id) : null,
+      amount: Number(netTotal),
+      reference_no: method === 'bank' ? (reference_no || null) : null
+    });
   }
+
+  // Payload (include legacy fields for safety)
+  const payload = {
+    vendor_id,
+    customer_name,
+    customer_mobile,
+    cart_discount: discount_amount,
+
+    // legacy single-payment hints (controller uses only if payments[] missing)
+    pay_amount: vendor_id ? Number(raw_pay_amount) : Number(netTotal),
+    payment_method: method,
+    bank_id: method === 'bank' ? (bank_id ? Number(bank_id) : null) : null,
+    reference_no: method === 'bank' ? (reference_no || null) : null,
+
+    // preferred multi-payment array
+    payments,
+
+    items: cart.map(i => ({
+      barcode: i.barcode,
+      qty: Number(i.qty),
+      price: Number(i.price)
+    }))
+  };
+
+  fetch('/pos/checkout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(async res => {
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) return res.json();
+    const text = await res.text();
+    throw new Error("Server did not return JSON. Response was: " + text.substring(0, 400));
+  })
+  .then(data => {
+    if (data.success) {
+      window.open('/pos/invoice/' + data.invoice_number, '_blank');
+      setTimeout(() => window.location.reload(), 700);
+    } else {
+      console.error(data);
+      alert("Error: " + (data.message || 'Sale failed.'));
+      btn.disabled = false;
+      btn.innerHTML = 'Checkout & Print Invoice';
+      document.getElementById('loading-overlay').style.display = 'none';
+    }
+  })
+  .catch(error => {
+    console.error(error);
+    alert("Unexpected error: " + error.message);
+    btn.disabled = false;
+    btn.innerHTML = 'Checkout & Print Invoice';
+    document.getElementById('loading-overlay').style.display = 'none';
+  });
+}
 </script>
 
 

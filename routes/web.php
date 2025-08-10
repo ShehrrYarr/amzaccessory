@@ -13,6 +13,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\CustomerMessageController;
 use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\PettyCashController;
+use App\Http\Controllers\BankController;
 
 
 use Illuminate\Support\Facades\Route;
@@ -187,22 +188,8 @@ Route::get('/petty-cash', [PettyCashController::class, 'index'])->name('pettycas
 Route::post('/petty-cash', [PettyCashController::class, 'store'])->name('pettycash.store');
 
 
-
-
-
-//Petty cash                   
-//POS page m edaily report 
-//Return accessory functionality     IMP
-//daily salw approve funtionality   IMP
-//total accessory count batch
-//stock remind me apni mrzi se kuch a 
-//TOTAL SALE PE DISCOUNT   IMP
-
-
-//Name dynamic
-//Search Filter
-//jis sy mobile lia h
-//Company , Group 
-//Add multiple Entries
-//Report as amzmobiles.shop
-// /public/invoices/
+//Bank Routes
+Route::get('/banks', [BankController::class, 'index'])->name('banks');
+Route::post('/banks', [BankController::class, 'storeBank'])->name('storeBank');
+Route::get('/getbank/{id}', [BankController::class, 'getBank'])->name('getBank');
+Route::put('/updatebank', [BankController::class, 'updateBank'])->name('updateBank');

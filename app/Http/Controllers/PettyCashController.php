@@ -9,6 +9,13 @@ use App\Models\pettyCash;
 
 class PettyCashController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    
     public function store(Request $request)
 {
     $data = $request->validate([

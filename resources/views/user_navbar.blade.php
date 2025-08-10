@@ -257,6 +257,10 @@
                                                         <a class="menu-item" href="/showusers"
                                                                 data-i18n="1 columns">Manage Users</a>
                                                 </li>
+                                                <li class="@if (\Request::is('banks')) active @endif">
+                                                        <a class="menu-item" href="/banks"
+                                                                data-i18n="1 columns">Manage Banks</a>
+                                                </li>
                                                 <li
                                                         class="@if (\Request::is('send-message-to-customers')) active @endif">
                                                         <a class="menu-item" href="/send-message-to-customers"
