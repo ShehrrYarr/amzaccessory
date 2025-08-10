@@ -90,7 +90,7 @@ class SaleController extends Controller
 
 public function pos()
 {
-    $vendors = \App\Models\Vendor::all();
+    $vendors = \App\Models\vendor::all();
     $batches = \App\Models\AccessoryBatch::with('accessory')
         ->where('qty_remaining', '>', 0)
         ->get();
