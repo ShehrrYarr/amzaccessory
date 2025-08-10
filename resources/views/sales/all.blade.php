@@ -54,9 +54,14 @@
                     <a href="{{ route('sales.all') }}" class="btn btn-secondary mx-1">Reset</a>
                 </form>
             </div>
-            <div class="ml-1">
-                <h2>Total Selling Amount: {{$totalSalesAmount}}</h2>
+           <div class="row ml-1 mb-2">
+            <div class="col">
+                <h5>Total Selling Price: Rs. {{ number_format($totalSellingPrice, 2) }}</h5>
             </div>
+            <div class="col">
+                <h5>Total Paid Price: Rs. {{ number_format($totalPaidPrice, 2) }}</h5>
+            </div>
+        </div>
 
 
             <div class="col-xxl-12 col-xl-12 col-lg-12 col-md-12 col-12 latest-update-tracking mt-1 ">
@@ -74,6 +79,7 @@
                                     <th>Date</th>
                                     <th>Customer/Vendor</th>
                                     <th>Total</th>
+                                    <th>Paid Amount</th>
                                     <th>Items</th>
                                     <th>Status</th>
                                 </tr>
@@ -103,6 +109,14 @@
                                         <div>Subtotal: Rs. {{ number_format($subtotal, 2) }}</div>
                                         <div>Discount: - Rs. {{ number_format($discount, 2) }}</div>
                                     </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{-- Pay Amount --}}
+                                    @if($sale->vendor)
+                                    Rs. {{ number_format($sale->pay_amount ?? 0, 2) }}
+                                    @else
+                                    Rs. {{ number_format($sale->total_amount, 2) }}
                                     @endif
                                 </td>
                                 <td>

@@ -294,6 +294,10 @@
                 <div class="card ">
                     <div class="card-header latest-update-heading d-flex justify-content-between">
                         <h4 class="latest-update-heading-title text-bold-500">Daily Sales</h4>
+                        <div>
+                            <h4>Total Selling Price: Rs. {{ number_format($totalSellingPrice, 2) }}</h4>
+                            <h4>Total Paid Price: Rs. {{ number_format($totalPaidPrice, 2) }}</h4>
+                        </div>
 
                     </div>
                     <div class="table-responsive">

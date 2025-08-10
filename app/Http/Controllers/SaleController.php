@@ -90,10 +90,12 @@ class SaleController extends Controller
 
 public function pos()
 {
-    $vendors = \App\Models\vendor::all();
-    $batches = \App\Models\AccessoryBatch::with('accessory')->where('qty_remaining', '>', 0)->get();
+    $vendors = \App\Models\Vendor::all();
+    $batches = \App\Models\AccessoryBatch::with('accessory')
+        ->where('qty_remaining', '>', 0)
+        ->get();
 
-     // Set timezone to Pakistan (Asia/Karachi)
+    // Set timezone to Pakistan (Asia/Karachi)
     $startOfDay = \Carbon\Carbon::now('Asia/Karachi')->startOfDay();
     $endOfDay = \Carbon\Carbon::now('Asia/Karachi')->endOfDay();
 
@@ -103,8 +105,25 @@ public function pos()
         ->orderByDesc('id')
         ->get();
 
-    return view('sales.pos', compact('vendors', 'batches','sales'));
+    // Calculate totals
+    $totalSellingPrice = $sales->sum('total_amount');
+
+    $totalPaidPrice = $sales->sum(function ($sale) {
+        if ($sale->vendor) {
+            return (float) ($sale->pay_amount ?? 0);
+        }
+        return (float) $sale->total_amount; // Walk-in customers pay full
+    });
+
+    return view('sales.pos', compact(
+        'vendors',
+        'batches',
+        'sales',
+        'totalSellingPrice',
+        'totalPaidPrice'
+    ));
 }
+
 public function accessoryReport()
 {
     
@@ -475,10 +494,19 @@ public function pending()
         ->orderBy('sale_date', 'desc')
         ->get();
 
-        
+    // Calculate totals for pending sales
+    $totalSellingPrice = $sales->sum('total_amount');
 
-    return view('sales.pending', compact('sales'));
+    $totalPaidPrice = $sales->sum(function ($sale) {
+        if ($sale->vendor) {
+            return (float) ($sale->pay_amount ?? 0);
+        }
+        return (float) $sale->total_amount; // Walk-in customers pay full
+    });
+
+    return view('sales.pending', compact('sales', 'totalSellingPrice', 'totalPaidPrice'));
 }
+
 
 // Show approved sales
 // public function approved()
@@ -504,11 +532,21 @@ public function approved(Request $request)
     }
 
     $sales = $query->orderBy('approved_at', 'desc')->get();
-   $totalSalesAmount = $sales->sum('total_amount');
 
+    // Total selling price
+    $totalSellingPrice = $sales->sum('total_amount');
 
-    return view('sales.approved', compact('sales','totalSalesAmount'));
+    // Total paid price
+    $totalPaidPrice = $sales->sum(function ($sale) {
+        if ($sale->vendor) {
+            return (float) ($sale->pay_amount ?? 0);
+        }
+        return (float) $sale->total_amount; // Walk-in customers pay full
+    });
+
+    return view('sales.approved', compact('sales', 'totalSellingPrice', 'totalPaidPrice'));
 }
+
 
 
 // public function allSales()
@@ -520,25 +558,30 @@ public function approved(Request $request)
 
 public function allSales(Request $request)
 {
-    
-
-
-      $query = \App\Models\Sale::with(['vendor', 'items.batch.accessory', 'user']);
-
+    $query = \App\Models\Sale::with(['vendor', 'items.batch.accessory', 'user']);
 
     // Filter by date range if provided
     if ($request->filled('start_date') && $request->filled('end_date')) {
         $start = $request->input('start_date') . ' 00:00:00';
-        $end = $request->input('end_date') . ' 23:59:59';
+        $end   = $request->input('end_date')   . ' 23:59:59';
         $query->whereBetween('sale_date', [$start, $end]);
     }
 
     $sales = $query->orderByDesc('id')->get();
-   $totalSalesAmount = $sales->sum('total_amount');
 
-    // We’ll handle AJAX in later steps
-    return view('sales.all', compact('sales','totalSalesAmount'));
+    // Totals
+    $totalSellingPrice = $sales->sum('total_amount');
+
+    $totalPaidPrice = $sales->sum(function ($sale) {
+        // Walk-in pays full; vendor pays whatever was recorded as pay_amount
+        return $sale->vendor
+            ? (float) ($sale->pay_amount ?? 0)
+            : (float) $sale->total_amount;
+    });
+
+    return view('sales.all', compact('sales', 'totalSellingPrice', 'totalPaidPrice'));
 }
+
 
 
 public function ajaxSaleItems($saleId)
