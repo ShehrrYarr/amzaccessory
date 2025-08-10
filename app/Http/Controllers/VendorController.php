@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Accounts;
 
 use App\Models\vendor;
+use App\Models\Sale;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use App\Models\AccessoryBatch;
+use App\Models\Accessory;
 
 
 
@@ -235,6 +238,210 @@ public function getVBalance($id)
     ]);
 }
 
+  public function showVSHistory(Request $request, $id)
+    {
+        $vendor = vendor::findOrFail($id);
+
+        // Optional date filters: ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+        $query = Sale::with(['items.batch.accessory', 'user'])
+            ->where('vendor_id', $vendor->id)
+            ->orderByDesc('sale_date');
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $start = $request->input('start_date') . ' 00:00:00';
+            $end   = $request->input('end_date')   . ' 23:59:59';
+            $query->whereBetween('sale_date', [$start, $end]);
+        }
+
+        $sales = $query->get();
+
+        // Totals across the filtered sales
+        $totalSoldAmount = $sales->sum('total_amount'); // after discount
+        $totalPaidAmount = $sales->sum(function ($sale) {
+            // For vendor sales, we record pay_amount
+            return (float) ($sale->pay_amount ?? 0);
+        });
+        $totalRemaining  = max($totalSoldAmount - $totalPaidAmount, 0);
+
+        // ---- Breakdown by Accessory (what this vendor bought) ----
+        // qty, gross (before discount per-line), avg unit price, last sold date
+        $byAccessory = [];
+        foreach ($sales as $sale) {
+            foreach ($sale->items as $item) {
+                $acc   = $item->batch->accessory ?? null;
+                if (!$acc) continue;
+
+                $key = $acc->id;
+                if (!isset($byAccessory[$key])) {
+                    $byAccessory[$key] = [
+                        'accessory_id' => $acc->id,
+                        'name'         => $acc->name,
+                        'qty'          => 0,
+                        'gross'        => 0.0, // sum of line subtotals (before cart-level discount allocation)
+                        'avg_price'    => 0.0,
+                        'last_sold_at' => $sale->sale_date,
+                    ];
+                }
+
+                $byAccessory[$key]['qty']   += (int) $item->quantity;
+                $byAccessory[$key]['gross'] += (float) $item->subtotal;
+
+                // Track latest sale date
+                if ($sale->sale_date > $byAccessory[$key]['last_sold_at']) {
+                    $byAccessory[$key]['last_sold_at'] = $sale->sale_date;
+                }
+            }
+        }
+        // Compute average price per accessory (gross / qty)
+        foreach ($byAccessory as &$accRow) {
+            $accRow['avg_price'] = $accRow['qty'] > 0 ? round($accRow['gross'] / $accRow['qty'], 2) : 0.0;
+        }
+        unset($accRow);
+
+        // ---- Breakdown by Batch (which batches were sold to this vendor) ----
+        // qty bought by this vendor from each batch, unit price used on sale lines
+        $byBatch = [];
+        foreach ($sales as $sale) {
+            foreach ($sale->items as $item) {
+                $batch = $item->batch;
+                if (!$batch) continue;
+
+                $key = $batch->id;
+                if (!isset($byBatch[$key])) {
+                    $byBatch[$key] = [
+                        'batch_id'      => $batch->id,
+                        'barcode'       => $batch->barcode,
+                        'accessory'     => optional($batch->accessory)->name,
+                        'qty_sold'      => 0,
+                        'unit_price'    => (float) $item->price_per_unit, // price used in sale
+                        'line_gross'    => 0.0, // sum of (unit_price * qty) to this vendor
+                        'purchase_date' => $batch->purchase_date,
+                        'qty_remaining' => $batch->qty_remaining, // current stock (global)
+                    ];
+                }
+
+                $byBatch[$key]['qty_sold']   += (int) $item->quantity;
+                $byBatch[$key]['line_gross'] += (float) $item->subtotal;
+                // If prices vary across lines, keep the last seen price_per_unit
+                $byBatch[$key]['unit_price']  = (float) $item->price_per_unit;
+            }
+        }
+
+        // Sort breakdowns (optional): most bought first
+        $byAccessory = collect($byAccessory)->sortByDesc('qty')->values();
+        $byBatch     = collect($byBatch)->sortByDesc('qty_sold')->values();
+
+        return view('showVSHistory', [
+            'vendor'           => $vendor,
+            'sales'            => $sales,
+            'totalSoldAmount'  => $totalSoldAmount,
+            'totalPaidAmount'  => $totalPaidAmount,
+            'totalRemaining'   => $totalRemaining,
+            'byAccessory'      => $byAccessory,
+            'byBatch'          => $byBatch,
+            'start_date'       => $request->input('start_date'),
+            'end_date'         => $request->input('end_date'),
+        ]);
+    }
+
+    public function showVRHistory(Request $request, $id)
+{
+    $vendor = vendor::findOrFail($id); // ⬅️ if your model is actually \App\Models\vendor, swap to that
+
+    // Base query: all batches supplied by this vendor
+    $query = AccessoryBatch::with(['accessory', 'user'])
+        ->where('vendor_id', $vendor->id);
+
+    // Optional date filter by purchase_date (YYYY-MM-DD)
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $start = Carbon::parse($request->input('start_date'))->startOfDay()->toDateString();
+        $end   = Carbon::parse($request->input('end_date'))->endOfDay()->toDateString();
+        $query->whereBetween('purchase_date', [$start, $end]);
+    }
+
+    $batches = $query->orderByDesc('purchase_date')->orderByDesc('id')->get();
+
+    // ---- Totals (for summary cards) ----
+    $totalQtyPurchased = (int) $batches->sum('qty_purchased');
+    $totalQtyRemaining = (int) $batches->sum('qty_remaining');
+
+    // Total purchase cost = sum(qty_purchased * purchase_price)
+    $totalPurchaseCost = $batches->reduce(function($carry, $b) {
+        return $carry + ((float)$b->purchase_price * (int)$b->qty_purchased);
+    }, 0.0);
+
+    // Potential retail value at the time (nullable selling_price handled as 0)
+    $totalPotentialRetail = $batches->reduce(function($carry, $b) {
+        $sell = $b->selling_price !== null ? (float)$b->selling_price : 0.0;
+        return $carry + ($sell * (int)$b->qty_purchased);
+    }, 0.0);
+
+    // ---- Breakdown by Accessory ----
+    // Aggregate quantities & prices per accessory
+    $byAccessory = [];
+    foreach ($batches as $batch) {
+        $acc = $batch->accessory;
+        if (!$acc) continue;
+
+        $key = $acc->id;
+        if (!isset($byAccessory[$key])) {
+            $byAccessory[$key] = [
+                'accessory_id'   => $acc->id,
+                'name'           => $acc->name,
+                'batches_count'  => 0,
+                'qty_purchased'  => 0,
+                'qty_remaining'  => 0,
+                'total_cost'     => 0.0,  // sum(qty_purchased * purchase_price)
+                'avg_purchase'   => 0.0,
+                'avg_selling'    => 0.0,
+                'last_purchase'  => $batch->purchase_date,
+            ];
+        }
+
+        $row = &$byAccessory[$key];
+        $row['batches_count'] += 1;
+        $row['qty_purchased'] += (int)$batch->qty_purchased;
+        $row['qty_remaining'] += (int)$batch->qty_remaining;
+        $row['total_cost']    += (float)$batch->purchase_price * (int)$batch->qty_purchased;
+
+        // track latest purchase date
+        if ($batch->purchase_date > $row['last_purchase']) {
+            $row['last_purchase'] = $batch->purchase_date;
+        }
+
+        // keep running sums for average prices
+        // we'll compute averages after the loop using all batches under this accessory
+        unset($row);
+    }
+
+    // Compute purchase/selling averages per accessory
+    foreach ($byAccessory as $accId => &$row) {
+        $relatedBatches = $batches->filter(fn($b) => optional($b->accessory)->id === $accId);
+
+        $purchaseAvg = $relatedBatches->avg('purchase_price') ?? 0.0;
+        // selling_price can be null
+        $sellingAvg  = $relatedBatches->filter(fn($b) => $b->selling_price !== null)->avg('selling_price') ?? 0.0;
+
+        $row['avg_purchase'] = round((float)$purchaseAvg, 2);
+        $row['avg_selling']  = round((float)$sellingAvg, 2);
+    }
+    unset($row);
+
+    // Sort breakdowns (optional): most purchased first
+    $byAccessory = collect($byAccessory)->sortByDesc('qty_purchased')->values();
+
+    return view('showVRHistory', [
+        'vendor'               => $vendor,
+        'batches'              => $batches,
+        'totalQtyPurchased'    => $totalQtyPurchased,
+        'totalQtyRemaining'    => $totalQtyRemaining,
+        'totalPurchaseCost'    => $totalPurchaseCost,
+        'totalPotentialRetail' => $totalPotentialRetail,
+        'byAccessory'          => $byAccessory,
+        'start_date'           => $request->input('start_date'),
+        'end_date'             => $request->input('end_date'),
+    ]);
+}
 
 
 

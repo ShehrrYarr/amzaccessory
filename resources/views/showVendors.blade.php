@@ -234,8 +234,8 @@
                                     <th>City</th>
                                     <th>Mobile Number</th>
                                     <th>CNIC</th>
-                                    <th>Sent Mobiles</th>
-                                    <th>Received Mobiles</th>
+                                    <th>Purchase From Vendor</th>
+                                    <th>Sale To Vendors</th>
                                     <th>Action</th>
                                     <th>Created by</th>
                                 </tr>
