@@ -447,6 +447,50 @@
                        
                     </div>
                 </div>
+
+                @if(isset($todaysRefunds))
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card shadow-sm">
+                      <div class="card-body">
+                        <h6 class="mb-1 text-muted">Today’s Refund Value (Items)</h6>
+                        <h3 class="mb-0">Rs. {{ number_format($todaysRefunds['value_from_items'], 2) }}</h3>
+                        <small class="text-muted">
+                          {{ $todaysRefunds['returns'] }} return(s), {{ $todaysRefunds['lines'] }} item line(s)
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                
+                  <div class="col-md-4">
+                    <div class="card shadow-sm">
+                      <div class="card-body">
+                        <h6 class="mb-1 text-muted">Refunds Paid Out Today</h6>
+                        <h3 class="mb-0">Rs. {{ number_format($todaysRefunds['paid_out_total'], 2) }}</h3>
+                        @if(!empty($todaysRefunds['paid_by_method']) && count($todaysRefunds['paid_by_method']))
+                        <small class="text-muted">
+                          @foreach($todaysRefunds['paid_by_method'] as $method => $amt)
+                          {{ ucfirst($method) }}: Rs. {{ number_format($amt, 2) }}@if(!$loop->last), @endif
+                          @endforeach
+                        </small>
+                        @endif
+                      </div>
+                    </div>
+                  </div>
+                
+                  <div class="col-md-4">
+                    <div class="card shadow-sm">
+                      <div class="card-body">
+                        <h6 class="mb-1 text-muted">Net Effect (Value − Paid)</h6>
+                        <h3 class="mb-0">
+                          Rs. {{ number_format($todaysRefunds['net_effect'], 2) }}
+                        </h3>
+                        <small class="text-muted">Positive = credit notes created but not yet paid out</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                @endif
             </div>
 
 

@@ -156,48 +156,7 @@
 </div>
 
 <script>
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     // When the "View Items" link is clicked
-    //     document.querySelectorAll('.sale-items-link').forEach(function(link) {
-    //         link.addEventListener('click', function() {
-    //             let saleId = this.getAttribute('data-sale');
-    //             // Show modal and loading state
-    //             let modal = new bootstrap.Modal(document.getElementById('saleItemsModal'));
-    //             document.getElementById('saleItemsModalBody').innerHTML = '<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading...</div>';
-    //             modal.show();
-    
-    //             // Fetch sale items via AJAX
-    //             fetch('/sales/' + saleId + '/items')
-    //                 .then(res => res.json())
-    //                 .then(data => {
-    //                     if (data.success) {
-    //                         // Build HTML for sale items and input fields for returns
-    //                         let html = '<table  class="table"><thead><tr><th>Item</th><th>Qty Sold</th><th>Return Qty</th></tr></thead><tbody>';
-    //                         data.items.forEach(function(item) {
-    //                             html += `<tr>
-    //                                 <td>${item.accessory}</td>
-    //                                 <td>${item.quantity}</td>
-    //                                 <td>
-    //                                     <input type="number" min="0" max="${item.quantity}" class="form-control return-qty" name="return_qty[${item.id}]" value="0">
-    //                                 </td>
-    //                             </tr>`;
-    //                         });
-    //                         html += '</tbody></table>';
-    //                         html += `<input type="hidden" name="sale_id" value="${saleId}">`;
-    //                         document.getElementById('saleItemsModalBody').innerHTML = html;
-    //                     } else {
-    //                         document.getElementById('saleItemsModalBody').innerHTML = '<div class="text-danger">Could not load items.</div>';
-    //                     }
-    //                 });
-    //         });
-    //     });
-    
-    //     // Handle return form submit (will be implemented in next step)
-    //     document.getElementById('return-items-form').addEventListener('submit', function(e) {
-    //         e.preventDefault();
-    //         // We'll fill this part in the next step
-    //     });
-    // });
+   
 
     document.addEventListener('DOMContentLoaded', function() {
     // Open modal and load sale items

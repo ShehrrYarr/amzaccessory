@@ -15,6 +15,7 @@ use App\Models\SaleReturnItems;
 use App\Models\SaleReturn;
 use App\Models\Bank;
 use App\Models\SalePayment;
+use Carbon\Carbon;
 
 
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -141,6 +142,39 @@ public function pos()
             ];
         });
 
+        $start = Carbon::today();      // app timezone
+    $end   = Carbon::tomorrow();
+
+    // Refund value from items (positive number)
+    $refundAgg = DB::table('sale_return_items as sri')
+        ->join('sale_returns as sr', 'sr.id', '=', 'sri.sale_return_id')
+        ->whereBetween('sr.created_at', [$start, $end])
+        ->selectRaw('COALESCE(SUM(sri.quantity * sri.price_per_unit),0) as total_value')
+        ->selectRaw('COUNT(*) as total_lines')
+        ->selectRaw('COUNT(DISTINCT sr.id) as total_returns')
+        ->first();
+
+    // Cash/bank refunds actually paid out today (negative SalePayment rows)
+    $refundPaidToday = (float) SalePayment::where('amount', '<', 0)
+        ->whereBetween('paid_at', [$start, $end])
+        ->sum('amount'); // negative number
+
+    // Optional: breakdown by method (counter/bank)
+    $refundPaidByMethod = SalePayment::select('method', DB::raw('SUM(-amount) as refunded')) // make positive
+        ->where('amount', '<', 0)
+        ->whereBetween('paid_at', [$start, $end])
+        ->groupBy('method')
+        ->pluck('refunded', 'method'); // ['counter' => 1234.50, 'bank' => 500.00]
+
+    $todaysRefunds = [
+        'value_from_items' => (float) $refundAgg->total_value,              // e.g. 2500.00
+        'lines'            => (int)   $refundAgg->total_lines,              // e.g. 7 line items
+        'returns'          => (int)   $refundAgg->total_returns,            // e.g. 3 return transactions
+        'paid_out_total'   => abs($refundPaidToday),                        // make it positive for UI
+        'paid_by_method'   => $refundPaidByMethod,                          // optional
+        'net_effect'       => (float) $refundAgg->total_value - abs($refundPaidToday), // credit notes vs cash
+    ];
+
     return view('sales.pos', compact(
         'vendors',
         'batches',
@@ -150,7 +184,8 @@ public function pos()
         'banks',
         'counterTotal',
         'bankTotal',
-        'bankBreakdown'
+        'bankBreakdown',
+        'todaysRefunds'
     ));
 }
 
@@ -818,77 +853,126 @@ public function ajaxSaleItems($saleId)
 public function processReturn(Request $request, Sale $sale)
 {
     $data = $request->validate([
-        'return_qty' => 'required|array',
+        'return_qty'   => 'required|array',
         'return_qty.*' => 'nullable|integer|min:0',
+        'reason'       => 'nullable|string|max:255',
     ]);
 
     \DB::beginTransaction();
     try {
-        $totalReturnValue = 0;
-        $hasReturn = false;
-
-        // 1. Check if any item is selected for return
-        foreach ($data['return_qty'] as $sale_item_id => $return_qty) {
-            if ($return_qty && $return_qty > 0) {
-                $hasReturn = true;
-                break;
-            }
-        }
-
+        $hasReturn = collect($data['return_qty'] ?? [])->some(fn($q) => (int)$q > 0);
         if (!$hasReturn) {
             return response()->json(['success' => false, 'message' => 'No items selected for return.'], 422);
         }
 
-        // 2. Create the SaleReturn record
+        // Create return header
         $salesReturn = \App\Models\SaleReturn::create([
             'sale_id' => $sale->id,
             'user_id' => auth()->id(),
-            'reason'  => $request->input('reason', null),
+            'reason'  => $data['reason'] ?? null,
         ]);
 
-        // 3. Log returned items and update stock
+        // Process items
+        $totalReturnValue = 0.0;
         foreach ($data['return_qty'] as $sale_item_id => $return_qty) {
-            if (!$return_qty || $return_qty < 1) continue;
+            $qty = (int) $return_qty;
+            if ($qty < 1) continue;
 
-            $saleItem = \App\Models\SaleItem::find($sale_item_id);
-            if (!$saleItem) throw new \Exception('Sale item not found: ' . $sale_item_id);
+            $saleItem = \App\Models\SaleItem::with('batch.accessory')->findOrFail($sale_item_id);
 
-            if ($return_qty > $saleItem->quantity) {
-                throw new \Exception('Return quantity exceeds sold quantity for: ' . ($saleItem->batch->accessory->name ?? 'Unknown'));
+            if ($qty > $saleItem->quantity) {
+                throw new \Exception('Return quantity exceeds sold quantity for: ' . ($saleItem->batch->accessory->name ?? 'Unknown item'));
             }
-            \Log::info('sale_return_id', ['data' => $salesReturn->id]);
-           
-            // Log the return (make sure column name matches migration!)
+
+            // Log line
             \App\Models\SaleReturnItems::create([
-                'sale_return_id' => $salesReturn->id, // This is required!
+                'sale_return_id' => $salesReturn->id,
                 'sale_item_id'   => $saleItem->id,
-                'quantity'       => $return_qty,
+                'quantity'       => $qty,
                 'price_per_unit' => $saleItem->price_per_unit,
             ]);
 
-            // Update sale_items
-            $saleItem->quantity -= $return_qty;
-            $saleItem->subtotal = $saleItem->quantity * $saleItem->price_per_unit;
+            // Adjust sale item
+            $saleItem->quantity -= $qty;
+            $saleItem->subtotal  = round($saleItem->quantity * (float)$saleItem->price_per_unit, 2);
             $saleItem->save();
 
-            // Update batch stock
-            $batch = $saleItem->batch;
-            $batch->qty_remaining += $return_qty;
-            $batch->save();
+            // Return to stock
+            $saleItem->batch->increment('qty_remaining', $qty);
 
-            $totalReturnValue += $return_qty * $saleItem->price_per_unit;
+            $totalReturnValue = round($totalReturnValue + ($qty * (float)$saleItem->price_per_unit), 2);
         }
 
-        // 4. Update sale total
-        $sale->total_amount -= $totalReturnValue;
-        if ($sale->total_amount < 0) $sale->total_amount = 0;
+        // Recompute sale total (clamped)
+        $sale->total_amount = max(0, round((float)$sale->total_amount - $totalReturnValue, 2));
         $sale->save();
+
+        // --- PAYMENTS / LEDGER IMPACT ---
+
+        // Sum of payments already recorded (positive minus negative refunds)
+        $paidSoFar = (float) $sale->payments()->sum('amount');
+
+        if ($sale->vendor_id) {
+            // VENDOR FLOW:
+            // 1) Always create a CREDIT entry in Accounts (reduce receivable)
+            //    Accounts.Debit/Credit are integers → drop paisa to rupees safely
+            \App\Models\Accounts::create([
+                'vendor_id'   => $sale->vendor_id,
+                'Debit'       => 0,
+                'Credit'      => (int) round($totalReturnValue), // rupees only
+                'description' => "Return for Sale #{$sale->id} (SR# {$salesReturn->id})",
+                'created_by'  => auth()->id(),
+            ]);
+
+            // 2) Optional cash refund only up to what’s actually paid
+            //    (don’t let payments go negative)
+            $refundToCash = min($totalReturnValue, max(0, $paidSoFar));
+            if ($refundToCash > 0) {
+                \App\Models\SalePayment::create([
+                    'sale_id'      => $sale->id,
+                    'method'       => 'counter',     // or mirror last payment method if you prefer
+                    'bank_id'      => null,
+                    'amount'       => -round($refundToCash, 2),  // negative = refund
+                    'reference_no' => 'RETURN-' . $salesReturn->id,
+                    'processed_by' => auth()->id(),
+                    'paid_at'      => now(),
+                ]);
+            }
+
+            // Refresh paid amount from ledger sum to avoid drift
+            $sale->pay_amount = (float) $sale->payments()->sum('amount');
+            if ($sale->pay_amount < 0) $sale->pay_amount = 0; // safety clamp
+            $sale->save();
+
+        } else {
+            // WALK-IN FLOW:
+            // Refund money out (counter by default) for the full returned value,
+            // but never let pay_amount go negative.
+            $refundToCash = min($totalReturnValue, max(0, $paidSoFar));
+
+            if ($refundToCash > 0) {
+                \App\Models\SalePayment::create([
+                    'sale_id'      => $sale->id,
+                    'method'       => 'counter',     // if you store payment method per item, mirror it here
+                    'bank_id'      => null,
+                    'amount'       => -round($refundToCash, 2),
+                    'reference_no' => 'RETURN-' . $salesReturn->id,
+                    'processed_by' => auth()->id(),
+                    'paid_at'      => now(),
+                ]);
+            }
+
+            $sale->pay_amount = (float) $sale->payments()->sum('amount');
+            if ($sale->pay_amount < 0) $sale->pay_amount = 0;
+            $sale->save();
+        }
 
         \DB::commit();
         return response()->json(['success' => true]);
-    } catch (\Exception $e) {
+
+    } catch (\Throwable $e) {
         \DB::rollBack();
-        \Log::info('Sales Return Debug', ['data' => $e]);
+        \Log::error('Sales Return Error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
         return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
     }
 }
