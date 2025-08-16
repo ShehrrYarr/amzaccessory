@@ -362,6 +362,7 @@
                                     <th>Payments</th>
                                     <th>Items</th>
                                     <th>Status</th>
+                                    <th>Receipt</th>
                                 </tr>
                             </thead>
                            <tbody>
@@ -438,6 +439,13 @@
                                     @else
                                     <span class="badge bg-warning text-dark">Pending</span>
                                     @endif
+                                </td>
+                                <td>
+                                  <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ route('sales.invoice', $sale->id) }}">
+                                    Receipt
+                                  </a>
+                                  {{-- Add a Show button if you later build details page --}}
+                                  {{-- <a class="btn btn-sm btn-outline-secondary" href="{{ route('sales.show',$sale->id) }}">View</a> --}}
                                 </td>
                             </tr>
                             @endforeach
