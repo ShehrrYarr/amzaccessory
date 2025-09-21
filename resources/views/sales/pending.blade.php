@@ -42,6 +42,7 @@
                                 <th>Total</th>
                                 <th>Paid Amount</th>
                                 <th>Items</th>
+                                <th>Receipt</th>
                                 <th>Added By</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -102,6 +103,13 @@
                                     </li>
                                     @endforeach
                                 </ul>
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ route('sales.invoice', $sale->id) }}">
+                                    Receipt
+                                </a>
+                                {{-- Add a Show button if you later build details page --}}
+                                {{-- <a class="btn btn-sm btn-outline-secondary" href="{{ route('sales.show',$sale->id) }}">View</a> --}}
                             </td>
                             <td>{{ $sale->user->name ?? '-' }}</td>
                             <td>

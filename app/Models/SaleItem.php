@@ -23,8 +23,9 @@ class SaleItem extends Model
         return $this->belongsTo(User::class);
     }     
 
-    public function returns()
+   public function returnItems()
 {
-    return $this->hasMany(\App\Models\SaleReturn::class, 'sale_item_id');
+    // fully qualified to avoid any import mismatch
+    return $this->hasMany(\App\Models\SaleReturnItems::class, 'sale_item_id', 'id');
 }
 }
