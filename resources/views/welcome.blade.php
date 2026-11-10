@@ -57,7 +57,7 @@
             <nav data-aos="zoom-out" data-aos-delay="800" class="navbar navbar-expand" style="background-color: var(--section-1-bg-color)">
                 <div class="container header">
 
-                    <a class="navbar-brand" href="/">
+                    <a class="navbar-brand" href="{{ url('/') }}">
                         Research<i class="version-number">Publications</i>
                         <!-- 
                             Custom Logo
@@ -274,7 +274,7 @@
                             <div class="row">
                                 <div class="branding col-12 p-3 text-center text-lg-left item">
                                     <div class="brand">
-                                        <a href="/" class="logo">
+                                        <a href="{{ url('/') }}" class="logo">
                                             Research Publications.                                 
                                             <!-- 
                                                 Custom Logo
