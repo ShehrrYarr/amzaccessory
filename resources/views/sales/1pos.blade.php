@@ -354,7 +354,7 @@ function updatePrice(i, newPrice) {
         items: cart
         };
         
-       fetch('/pos/checkout', {
+       fetch('{{ url('/') }}/pos/checkout', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -374,7 +374,7 @@ function updatePrice(i, newPrice) {
 .then(data => {
     if (data.success) {
         // Open invoice in a new tab
-        window.open('/pos/invoice/' + data.invoice_number, '_blank');
+        window.open('{{ url('/') }}/pos/invoice/' + data.invoice_number, '_blank');
         // Reload current page after short delay (so user sees invoice opens)
         setTimeout(function() {
             window.location.reload();

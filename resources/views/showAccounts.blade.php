@@ -303,7 +303,7 @@
         var id = value;
         $.ajax({
         type: "GET",
-        url: '/getaccount/' + id,
+        url: '{{ url('/') }}/getaccount/' + id,
         success: function (data) {
         $("#deleteMobile").trigger("reset");
         

@@ -233,7 +233,7 @@ function edit(value) {
         var id = value;
         $.ajax({
         type: "GET",
-        url: '/accessoryedit/' + id,
+        url: '{{ url('/') }}/accessoryedit/' + id,
         success: function (data) {
         $("#editAccessory").trigger("reset");
         

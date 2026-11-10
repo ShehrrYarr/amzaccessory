@@ -318,7 +318,7 @@
         });
 
      function showBarcodeAjax(batchId) {
-        fetch('/batches/' + batchId + '/barcode')
+        fetch('{{ url('/') }}/batches/' + batchId + '/barcode')
         .then(response => response.json())
         .then(data => {
         if (data.success) {
@@ -596,7 +596,7 @@
 //         var id = value;
 //         $.ajax({
 //         type: "GET",
-//         url: '/accessoryedit/' + id,
+//         url: '{{ url('/') }}/accessoryedit/' + id,
 //         success: function (data) {
 //         $("#editAccessory").trigger("reset");
         

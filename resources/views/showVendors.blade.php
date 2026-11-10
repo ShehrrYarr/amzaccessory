@@ -310,7 +310,7 @@
         //     var id = value;
         //     $.ajax({
         //         type: "GET",
-        //         url: '/editvendor/' + id,
+        //         url: '{{ url('/') }}/editvendor/' + id,
         //         success: function (data) {
         //             $("#editmobile").trigger("reset");
 
@@ -344,7 +344,7 @@
         function edit(id) {
             $.ajax({
                 type: "GET",
-                url: '/editvendor/' + id,
+                url: '{{ url('/') }}/editvendor/' + id,
                 success: function (data) {
                     $("#editmobile").trigger("reset");
 
@@ -357,7 +357,7 @@
 
                     // Show current picture
                     if (data.result.picture) {
-                        $('#edit-picture-preview').attr('src', '/storage/' + data.result.picture);
+                        $('#edit-picture-preview').attr('src', '{{ asset('storage') }}/' + data.result.picture);
                     } else {
                         $('#edit-picture-preview').attr('src', '{{ asset("images/placeholder.png") }}');
                         $('#edit-picture-preview').attr('alt', 'N/A');
@@ -377,7 +377,7 @@
             var id = value;
             $.ajax({
                 type: "GET",
-                url: '/editvendor/' + id,
+                url: '{{ url('/') }}/editvendor/' + id,
                 success: function (data) {
                     $("#deleteMobile").trigger("reset");
 

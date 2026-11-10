@@ -27,7 +27,7 @@
                                     <div
                                         class="d-flex align-items-start mb-sm-1 mb-xl-0 border-right-blue-grey border-right-lighten-5">
                                         <span class="card-icon primary d-flex justify-content-center mr-3">
-                                            <a href="/accessories"> <i
+                                            <a href="{{ url('/') }}/accessories"> <i
                                                     class="icon p-1 fa fa-mobile customize-icon font-large-5 p-1"></i></a>
                                         </span>
                                         <div class="stats-amount mr-3">
@@ -43,7 +43,7 @@
                                 <div class="col-lg-6 col-xl-3 col-sm-6 col-12">
                                     <div class="d-flex align-items-start border-right-blue-grey border-right-lighten-5">
                                         <span class="card-icon success d-flex justify-content-center mr-3">
-                                            <a href="/sales/all"> <i
+                                            <a href="{{ url('/') }}/sales/all"> <i
                                                     class="icon p-1 fa fa-mobile customize-icon font-large-5 p-1"></i></a>
                                         </span>
                                         <div class="stats-amount mr-3">
@@ -58,7 +58,7 @@
                                 <div class="col-lg-6 col-xl-3 col-sm-6 col-12">
                                     <div class="d-flex align-items-start border-right-blue-grey border-right-lighten-5">
                                         <span class="card-icon success d-flex justify-content-center mr-3">
-                                            <a href="/sales/pending"> <i
+                                            <a href="{{ url('/') }}/sales/pending"> <i
                                                     class="icon p-1 fa fa-cart-plus customize-icon font-large-5 p-1"></i></a>
                                         </span>
                                         <div class="stats-amount mr-3">
@@ -73,7 +73,7 @@
                                 <div class="col-lg-6 col-xl-3 col-sm-6 col-12">
                                     <div class="d-flex align-items-start border-right-blue-grey border-right-lighten-5">
                                         <span class="card-icon success d-flex justify-content-center mr-3">
-                                            <a href="/sales/approved"> <i
+                                            <a href="{{ url('/') }}/sales/approved"> <i
                                                     class="icon p-1 fa fa-cart-plus customize-icon font-large-5 p-1"></i></a>
                                         </span>
                                         <div class="stats-amount mr-3">

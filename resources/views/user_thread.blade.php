@@ -94,7 +94,7 @@
             var request = XMLHttpRequest();
             request.open(
                 "get",
-                "/fetchthread/" + user_id,
+                "{{ url('/') }}/fetchthread/" + user_id,
                 false
             );
             request.send();

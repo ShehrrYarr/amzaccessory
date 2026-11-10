@@ -206,7 +206,7 @@
             var id = value;
             $.ajax({
                 type: "GET",
-                url: '/editcompany/' + id,
+                url: '{{ url('/') }}/editcompany/' + id,
                 success: function(data) {
                     $("#editmobile").trigger("reset");
 
@@ -228,7 +228,7 @@
             var id = value;
             $.ajax({
                 type: "GET",
-                url: '/editcompany/' + id,
+                url: '{{ url('/') }}/editcompany/' + id,
                 success: function(data) {
                     $("#deleteMobile").trigger("reset");
 

@@ -202,7 +202,7 @@ function edit(value) {
         var id = value;
         $.ajax({
         type: "GET",
-        url: '/getbank/' + id,
+        url: '{{ url('/') }}/getbank/' + id,
         success: function (data) {
         $("#bankModal").trigger("reset");
         

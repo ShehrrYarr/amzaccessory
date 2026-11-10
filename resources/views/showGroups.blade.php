@@ -206,7 +206,7 @@
             var id = value;
             $.ajax({
                 type: "GET",
-                url: '/editgroup/' + id,
+                url: '{{ url('/') }}/editgroup/' + id,
                 success: function(data) {
                     $("#editmobile").trigger("reset");
 
@@ -228,7 +228,7 @@
             var id = value;
             $.ajax({
                 type: "GET",
-                url: '/editgroup/' + id,
+                url: '{{ url('/') }}/editgroup/' + id,
                 success: function(data) {
                     $("#deleteMobile").trigger("reset");
 

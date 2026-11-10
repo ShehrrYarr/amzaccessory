@@ -205,7 +205,7 @@
             alert('Please select both dates!');
             return;
         }
-        fetch(`/reports/sales?start=${start}&end=${end}`)
+        fetch(`{{ url('/') }}/reports/sales?start=${start}&end=${end}`)
             .then(res => res.json())
             .then(data => {
                 let tbody = document.querySelector('#salesTable tbody');

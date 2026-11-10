@@ -1,1 +1,1 @@
-<script>window.location = "/home";</script>
+<script>window.location = "{{ url('/home') }}";</script>

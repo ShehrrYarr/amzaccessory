@@ -145,11 +145,11 @@
                                                         class="menu-title" data-i18n="Templates">Vendors</span></a>
                                         <ul class="menu-content">
                                                 <li class="@if(\Request::is('showvendors')) active @endif"><a
-                                                                class="menu-item" href="/showvendors"
+                                                                class="menu-item" href="{{ url('/') }}/showvendors"
                                                                 data-i18n="1 columns">Manage Vendors</a>
                                                 </li>
                                                 <li class="@if(\Request::is('receivablevendors')) active @endif"><a
-                                                                class="menu-item" href="/receivablevendors"
+                                                                class="menu-item" href="{{ url('/') }}/receivablevendors"
                                                                 data-i18n="1 columns">Receivable Vendors</a>
                                                 </li>
 
@@ -165,22 +165,22 @@
                                         <ul class="menu-content">
 
                                                 <li class="@if (\Request::is('pos')) active @endif"><a class="menu-item"
-                                                                href="/pos" data-i18n="1 columns">POS</a>
+                                                                href="{{ url('/') }}/pos" data-i18n="1 columns">POS</a>
                                                 </li>
                                                 <li class="@if (\Request::is('sales/pending')) active @endif"><a
-                                                                class="menu-item" href="/sales/pending"
+                                                                class="menu-item" href="{{ url('/') }}/sales/pending"
                                                                 data-i18n="1 columns">Pending Sales</a>
                                                 </li>
                                                 <li class="@if (\Request::is('sales/approved')) active @endif"><a
-                                                                class="menu-item" href="/sales/approved"
+                                                                class="menu-item" href="{{ url('/') }}/sales/approved"
                                                                 data-i18n="1 columns">Approved Sales</a>
                                                 </li>
                                                 <li class="@if (\Request::is('sales/all')) active @endif"><a
-                                                                class="menu-item" href="/sales/all"
+                                                                class="menu-item" href="{{ url('/') }}/sales/all"
                                                                 data-i18n="1 columns">All Sales</a>
                                                 </li>
                                                 <li class="@if (\Request::is('sales/refunds')) active @endif"><a
-                                                                class="menu-item" href="/sales/refunds"
+                                                                class="menu-item" href="{{ url('/') }}/sales/refunds"
                                                                 data-i18n="1 columns">Refund</a>
                                                 </li>
 
@@ -191,15 +191,15 @@
                                                         Inventory</span></a>
                                         <ul class="menu-content">
                                                 <li class="@if (\Request::is('filteraccessory')) active @endif"><a
-                                                                class="menu-item" href="/filteraccessory"
+                                                                class="menu-item" href="{{ url('/') }}/filteraccessory"
                                                                 data-i18n="1 columns">Search Filter</a>
                                                 </li>
                                                 <li class="@if (\Request::is('accessories')) active @endif"><a
-                                                                class="menu-item" href="/accessories"
+                                                                class="menu-item" href="{{ url('/') }}/accessories"
                                                                 data-i18n="1 columns">Add Accessory</a>
                                                 </li>
                                                 <li class="@if (\Request::is('batches')) active @endif"><a
-                                                                class="menu-item" href="/batches"
+                                                                class="menu-item" href="{{ url('/') }}/batches"
                                                                 data-i18n="1 columns">Add Batch</a>
                                                 </li>
 
@@ -210,11 +210,11 @@
                                                         class="menu-title" data-i18n="Templates">Add values</span></a>
                                         <ul class="menu-content">
                                                 <li class="@if (\Request::is('showcompanies')) active @endif"><a
-                                                                class="menu-item" href="/showcompanies"
+                                                                class="menu-item" href="{{ url('/') }}/showcompanies"
                                                                 data-i18n="1 columns">Companies</a>
                                                 </li>
                                                 <li class="@if (\Request::is('showgroups')) active @endif"><a
-                                                                class="menu-item" href="/showgroups"
+                                                                class="menu-item" href="{{ url('/') }}/showgroups"
                                                                 data-i18n="1 columns">Groups</a>
                                                 </li>
 
@@ -224,7 +224,7 @@
                                                         class="menu-title" data-i18n="Templates">Manage Petty Cash</span></a>
                                         <ul class="menu-content">
                                                 <li class="@if (\Request::is('petty-cash')) active @endif"><a
-                                                                class="menu-item" href="/petty-cash"
+                                                                class="menu-item" href="{{ url('/') }}/petty-cash"
                                                                 data-i18n="1 columns">Petty Cash</a>
                                                 </li>
                                               
@@ -242,32 +242,32 @@
                                         </a>
                                         <ul class="menu-content">
                                                 <li class="@if (\Request::is('accessoryreport')) active @endif"><a
-                                                                class="menu-item" href="/accessoryreport"
+                                                                class="menu-item" href="{{ url('/') }}/accessoryreport"
                                                                 data-i18n="1 columns">Report</a>
                                                 </li>
                                                 <li class="@if (\Request::is('showpassword')) active @endif">
-                                                        <a class="menu-item" href="/showpassword"
+                                                        <a class="menu-item" href="{{ url('/') }}/showpassword"
                                                                 data-i18n="1 columns">Password</a>
                                                 </li>
                                                 <li class="@if (\Request::is('showlogin')) active @endif">
-                                                        <a class="menu-item" href="/showlogin" data-i18n="1 columns">Set
+                                                        <a class="menu-item" href="{{ url('/') }}/showlogin" data-i18n="1 columns">Set
                                                                 login Time</a>
                                                 </li>
                                                 <li class="@if (\Request::is('showusers')) active @endif">
-                                                        <a class="menu-item" href="/showusers"
+                                                        <a class="menu-item" href="{{ url('/') }}/showusers"
                                                                 data-i18n="1 columns">Manage Users</a>
                                                 </li>
                                                 <li class="@if (\Request::is('banks')) active @endif">
-                                                        <a class="menu-item" href="/banks"
+                                                        <a class="menu-item" href="{{ url('/') }}/banks"
                                                                 data-i18n="1 columns">Manage Banks</a>
                                                 </li>
                                                 <li
                                                         class="@if (\Request::is('send-message-to-customers')) active @endif">
-                                                        <a class="menu-item" href="/send-message-to-customers"
+                                                        <a class="menu-item" href="{{ url('/') }}/send-message-to-customers"
                                                                 data-i18n="1 columns">Send Message</a>
                                                 </li>
                                                 <li class="@if (\Request::is('loginhistory')) active @endif">
-                                                        <a class="menu-item" href="/loginhistory"
+                                                        <a class="menu-item" href="{{ url('/') }}/loginhistory"
                                                                 data-i18n="1 columns">Login Histories</a>
                                                 </li>
                                         </ul>

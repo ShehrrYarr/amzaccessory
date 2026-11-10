@@ -558,7 +558,7 @@ document.getElementById('bank-ref-wrap').style.display = isBank ? '' : 'none';
         extraFields.style.display = '';
         balanceInput.value = 'Loading...';
 
-        fetch(`/api/vendor-balance/${vendorId}`)
+        fetch(`{{ url('/') }}/api/vendor-balance/${vendorId}`)
           .then(res => res.json())
           .then(data => { balanceInput.value = data.balance; })
           .catch(() => { balanceInput.value = 'Error loading balance'; });
@@ -801,7 +801,7 @@ document.getElementById('bank-ref-wrap').style.display = isBank ? '' : 'none';
     }))
   };
 
-  fetch('/pos/checkout', {
+  fetch('{{ url('/') }}/pos/checkout', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -817,7 +817,7 @@ document.getElementById('bank-ref-wrap').style.display = isBank ? '' : 'none';
   })
   .then(data => {
     if (data.success) {
-      window.open('/pos/invoice/' + data.invoice_number, '_blank');
+      window.open('{{ url('/') }}/pos/invoice/' + data.invoice_number, '_blank');
       setTimeout(() => window.location.reload(), 700);
     } else {
       console.error(data);

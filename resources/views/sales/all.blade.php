@@ -187,7 +187,7 @@
         link.addEventListener('click', function() {
             let saleId = this.getAttribute('data-sale');
             // Set form action dynamically
-            document.getElementById('return-items-form').action = '/sales/' + saleId + '/return';
+            document.getElementById('return-items-form').action = '{{ url('/') }}/sales/' + saleId + '/return';
 
             // Show modal and loading state
             let modal = new bootstrap.Modal(document.getElementById('saleItemsModal'));
@@ -195,7 +195,7 @@
             modal.show();
 
             // Fetch sale items via AJAX
-            fetch('/sales/' + saleId + '/items')
+            fetch('{{ url('/') }}/sales/' + saleId + '/items')
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
