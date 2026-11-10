@@ -232,7 +232,7 @@
                                                 <tr>
                                                     <td class="text-truncate">
                                                         <div class="avatar avatar-md mr-1">
-                                                            <img class="rounded-circle" src="../../../app-assets/images/portrait/small/avatar-s-11.png" alt="Generic placeholder image">
+                                                            <img class="rounded-circle" src="{{ asset('app-assets') }}/images/portrait/small/avatar-s-11.png" alt="Generic placeholder image">
                                                         </div>
                                                         <span class="text-truncate">{{$key->name}}</span>
                                                     </td>
@@ -297,7 +297,7 @@
                                                 <div>
                                                     <ul class="list-unstyled users-list cursor-pointer m-0 d-flex align-items-center">
                                                         <li class="avatar avatar-sm pull-up my-0">
-                                                            <img class="rounded-circle" src="../../../app-assets/images/portrait/small/avatar-s-20.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Ogasawara">
+                                                            <img class="rounded-circle" src="{{ asset('app-assets') }}/images/portrait/small/avatar-s-20.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Ogasawara">
                                                         </li>
                                                     </ul>
                                                 </div>
@@ -322,13 +322,13 @@
                                                 <div>
                                                     <ul class="list-unstyled users-list cursor-pointer m-0 d-flex align-items-center">
                                                         <li class="avatar avatar-sm pull-up my-0">
-                                                            <img class="rounded-circle" src="../../../app-assets/images/portrait/small/avatar-s-20.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Ogasawara">
+                                                            <img class="rounded-circle" src="{{ asset('app-assets') }}/images/portrait/small/avatar-s-20.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Ogasawara">
                                                         </li>
                                                         <li class="avatar avatar-sm pull-up my-0">
-                                                            <img class="rounded-circle" src="../../../app-assets/images/portrait/small/avatar-s-21.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Stepan">
+                                                            <img class="rounded-circle" src="{{ asset('app-assets') }}/images/portrait/small/avatar-s-21.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Stepan">
                                                         </li>
                                                         <li class="avatar avatar-sm pull-up my-0">
-                                                            <img class="rounded-circle" src="../../../app-assets/images/portrait/small/avatar-s-22.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Kimberly">
+                                                            <img class="rounded-circle" src="{{ asset('app-assets') }}/images/portrait/small/avatar-s-22.png" alt="Generic placeholder image" data-toggle="tooltip" data-placement="top" title="Kimberly">
                                                         </li>
                                                     </ul>
                                                 </div>

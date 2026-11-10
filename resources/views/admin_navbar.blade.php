@@ -12,38 +12,38 @@
     <meta name="keywords" content="admin template, stack admin template, dashboard template, flat admin template, responsive admin template, web app">
     <meta name="author" content="PIXINVENT">
     <title>Adora LLC</title>
-    <link rel="apple-touch-icon" href="../../../app-assets/images/ico/apple-icon-120.png">
-    <link rel="shortcut icon" type="image/x-icon" href="../../../app-assets/images/ico/favicon.ico">
+    <link rel="apple-touch-icon" href="{{ asset('app-assets') }}/images/ico/apple-icon-120.png">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('app-assets') }}/images/ico/favicon.ico">
     <link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,400,400i,500,500i%7COpen+Sans:300,300i,400,400i,600,600i,700,700i" rel="stylesheet">
 
      <!-- BEGIN: Vendor CSS-->
-     <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/vendors.min.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/pickers/daterange/daterangepicker.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/pickers/pickadate/pickadate.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/extensions/unslider.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/weather-icons/climacons.min.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/fonts/meteocons/style.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/charts/morris.css">
+     <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/vendors.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/pickers/daterange/daterangepicker.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/pickers/pickadate/pickadate.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/extensions/unslider.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/weather-icons/climacons.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/fonts/meteocons/style.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/charts/morris.css">
     <!-- END: Vendor CSS-->
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/vendors/css/tables/datatable/datatables.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/vendors/css/tables/datatable/datatables.min.css">
     <!-- BEGIN: Theme CSS-->
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/bootstrap-extended.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/colors.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/components.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/bootstrap-extended.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/colors.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/components.css">
     <!-- END: Theme CSS-->
 
     <!-- BEGIN: Page CSS-->
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/core/menu/menu-types/vertical-menu.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/core/colors/palette-gradient.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/fonts/simple-line-icons/style.css">
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/pages/timeline.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/core/menu/menu-types/vertical-menu.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/core/colors/palette-gradient.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/fonts/simple-line-icons/style.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/pages/timeline.css">
     <!-- END: Page CSS-->
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/pages/app-chat.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/pages/app-chat.css">
     <!-- BEGIN: Custom CSS-->
-    <link rel="stylesheet" type="text/css" href="../../../app-assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('app-assets') }}/css/style.css">
     <!-- END: Custom CSS-->
-    <script src="../../../app-assets/vendors/js/vendors.min.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/vendors.min.js"></script>
 </head>
 <!-- END: Head-->
 
@@ -57,7 +57,7 @@
             <div class="navbar-header">
                 <ul class="nav navbar-nav flex-row">
                     <li class="nav-item mobile-menu d-md-none mr-auto"><a class="nav-link nav-menu-main menu-toggle hidden-xs" href="#"><i class="feather icon-menu font-large-1"></i></a></li>
-                    <li class="nav-item"><a class="navbar-brand" href="../../../html/ltr/vertical-menu-template/index.html"><img class="brand-logo" alt="stack admin logo" src="../../../app-assets/images/logo/stack-logo.png">
+                    <li class="nav-item"><a class="navbar-brand" href="../../../html/ltr/vertical-menu-template/index.html"><img class="brand-logo" alt="stack admin logo" src="{{ asset('app-assets') }}/images/logo/stack-logo.png">
                             <h2 class="brand-text">Adora LLC</h2>
                         </a></li>
                     <li class="nav-item d-md-none"><a class="nav-link open-navbar-container" data-toggle="collapse" data-target="#navbar-mobile"><i class="fa fa-ellipsis-v"></i></a></li>
@@ -159,28 +159,29 @@
 
 
     <!-- BEGIN: Vendor JS-->
-    {{-- <script src="../../../app-assets/vendors/js/vendors.min.js"></script> --}}
+    {{-- <script src="{{ asset('app-assets') }}/vendors/js/vendors.min.js"></script> --}}
     <!-- BEGIN Vendor JS-->
-    <script src="../../../app-assets/vendors/js/extensions/jquery.steps.min.js"></script>
-    <script src="../../../app-assets/vendors/js/pickers/dateTime/moment-with-locales.min.js"></script>
-    <script src="../../../app-assets/vendors/js/pickers/daterange/daterangepicker.js"></script>
-    <script src="../../../app-assets/vendors/js/pickers/pickadate/picker.js"></script>
-    <script src="../../../app-assets/vendors/js/pickers/pickadate/picker.date.js"></script>
-    <script src="../../../app-assets/vendors/js/forms/validation/jquery.validate.min.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/extensions/jquery.steps.min.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/pickers/dateTime/moment-with-locales.min.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/pickers/daterange/daterangepicker.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/pickers/pickadate/picker.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/pickers/pickadate/picker.date.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/forms/validation/jquery.validate.min.js"></script>
     <!-- BEGIN: Page Vendor JS-->
-    <script src="../../../app-assets/vendors/js/extensions/unslider-min.js"></script>
-    <script src="../../../app-assets/vendors/js/timeline/horizontal-timeline.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/extensions/unslider-min.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/timeline/horizontal-timeline.js"></script>
     <!-- END: Page Vendor JS-->
-    <script src="../../../app-assets/vendors/js/tables/datatable/datatables.min.js"></script>
+    <script src="{{ asset('app-assets') }}/vendors/js/tables/datatable/datatables.min.js"></script>
     <!-- BEGIN: Theme JS-->
-    <script src="../../../app-assets/js/core/app-menu.js"></script>
-    <script src="../../../app-assets/js/core/app.js"></script>
-    <script src="../../../app-assets/js/scripts/pages/app-chat.js"></script>
+    <script>window.APP_ASSETS = "{{ asset('app-assets') }}";</script>
+    <script src="{{ asset('app-assets') }}/js/core/app-menu.js"></script>
+    <script src="{{ asset('app-assets') }}/js/core/app.js"></script>
+    <script src="{{ asset('app-assets') }}/js/scripts/pages/app-chat.js"></script>
     <!-- END: Theme JS-->
-    <script src="../../../app-assets/js/scripts/tables/datatables/datatable-basic.js"></script>
+    <script src="{{ asset('app-assets') }}/js/scripts/tables/datatables/datatable-basic.js"></script>
     <!-- BEGIN: Page JS-->
-    <script src="../../../app-assets/js/scripts/pages/dashboard-ecommerce.js"></script>
-    <script src="../../../app-assets/js/scripts/forms/wizard-steps.js"></script>
+    <script src="{{ asset('app-assets') }}/js/scripts/pages/dashboard-ecommerce.js"></script>
+    <script src="{{ asset('app-assets') }}/js/scripts/forms/wizard-steps.js"></script>
     <!-- END: Page JS-->
 
 </body>

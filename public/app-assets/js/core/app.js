@@ -267,7 +267,7 @@
                         a = 0
 
                     // getting json data from file for search results
-                    $.getJSON("../../../app-assets/data/" + $filename + ".json", function (
+                    $.getJSON((window.APP_ASSETS||"../../../app-assets")+"/data/" + $filename + ".json", function (
                         data
                     ) {
                         for (var i = 0; i < data.listItems.length; i++) {
@@ -547,7 +547,7 @@
                 debug: false,
                 fallbackLng: "en",
                 backend: {
-                    loadPath: "../../../app-assets/data/locales/{{lng}}.json",
+                    loadPath: (window.APP_ASSETS||"../../../app-assets")+"/data/locales/{{lng}}.json",
                 },
                 returnObjects: true
             },
